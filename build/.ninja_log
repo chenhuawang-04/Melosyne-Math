@@ -1,0 +1,7 @@
+# ninja log v7
+5	1932	7875571488129684	CMakeFiles/test_bit_ops.dir/test_bit_ops.cpp.obj	aeed7c7d386e4463
+1943	2103	7875571507540452	test_bit_ops.exe	305da6b952745fc1
+5	2020	7875571987572674	CMakeFiles/benchmark_bit_ops.dir/benchmark_bit_ops.cpp.obj	7d8302fe5f8b9819
+2022	2492	7875572007732681	benchmark_bit_ops.exe	8c0619e9986bc95
+7	2050	7875572188495943	CMakeFiles/performance_regression_test.dir/performance_regression_test.cpp.obj	f86fe850bf7303d4
+2051	2385	7875572208900589	performance_regression_test.exe	85bdca9134f2ee4a
