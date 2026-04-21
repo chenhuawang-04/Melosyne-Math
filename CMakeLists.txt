@@ -15,6 +15,11 @@ option(FAST_MATH_BUILD_TESTS "Build comprehensive test framework" ON)
 option(FAST_MATH_BUILD_BENCHMARKS "Build comprehensive benchmark framework" ON)
 option(FAST_MATH_BUILD_MODULES "Build C++20 module interface target" ON)
 
+if(FAST_MATH_BUILD_MODULES AND CMAKE_VERSION VERSION_LESS 3.28)
+    message(WARNING "FAST_MATH_BUILD_MODULES requires CMake >= 3.28; disabling modules for this configure.")
+    set(FAST_MATH_BUILD_MODULES OFF)
+endif()
+
 set(FAST_MATH_DIRECTXMATH_DIR "E:/Project/MelosyneTest/Math/DirectXMath-apr2025" CACHE PATH "Path to DirectXMath root")
 set(FAST_MATH_EIGEN_DIR "E:/Project/MelosyneTest/Math/eigen-3.4.0" CACHE PATH "Path to Eigen root")
 set(FAST_MATH_GLM_DIR "E:/Project/MelosyneTest/Math/glm-1.0.2" CACHE PATH "Path to GLM root")
