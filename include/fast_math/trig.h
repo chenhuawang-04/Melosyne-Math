@@ -90,13 +90,40 @@ inline void sincosBatch(const AngleBatch* MMATH_RESTRICT angles_,
  */
 inline void sinBatch(const AngleBatch* MMATH_RESTRICT angles_,
                      float* MMATH_RESTRICT out_sin_) noexcept {
-    // Use sincosBatch and discard cosine
-    // (Modern CPUs make this nearly free due to pipelining)
-    SinCosBatch batch;
-    batch.sin_data = out_sin_;
-    batch.cos_data = out_sin_;  // Dummy (will be overwritten)
-    batch.count = angles_->count;
-    sincosBatch(angles_, &batch);
+    const float* MMATH_RESTRICT in = angles_->data;
+    int32_t count = angles_->count;
+    int32_t i = 0;
+
+#if defined(__AVX2__) && defined(__FMA__)
+    const int32_t avx2_count = (count / 8) * 8;
+    for (; i < avx2_count; i += 8) {
+        AnglesAvx2 angle_pack;
+        std::memcpy(angle_pack.angles, in + i, 8 * sizeof(float));
+
+        SinCosAvx2 result_pack;
+        sincosAvx2(&angle_pack, &result_pack);
+
+        std::memcpy(out_sin_ + i, result_pack.sins, 8 * sizeof(float));
+    }
+#elif defined(__SSE4_1__)
+    const int32_t sse_count = (count / 4) * 4;
+    for (; i < sse_count; i += 4) {
+        AnglesSse angle_pack;
+        std::memcpy(angle_pack.angles, in + i, 4 * sizeof(float));
+
+        SinCosSse result_pack;
+        sincosSse(&angle_pack, &result_pack);
+
+        std::memcpy(out_sin_ + i, result_pack.sins, 4 * sizeof(float));
+    }
+#endif
+
+    for (; i < count; ++i) {
+        Angle angle = { in[i] };
+        SinCos sc;
+        sincosScalar(angle, &sc);
+        out_sin_[i] = sc.sin;
+    }
 }
 
 /**
@@ -104,12 +131,40 @@ inline void sinBatch(const AngleBatch* MMATH_RESTRICT angles_,
  */
 inline void cosBatch(const AngleBatch* MMATH_RESTRICT angles_,
                      float* MMATH_RESTRICT out_cos_) noexcept {
-    // Use sincosBatch and discard sine
-    SinCosBatch batch;
-    batch.sin_data = out_cos_;  // Dummy
-    batch.cos_data = out_cos_;
-    batch.count = angles_->count;
-    sincosBatch(angles_, &batch);
+    const float* MMATH_RESTRICT in = angles_->data;
+    int32_t count = angles_->count;
+    int32_t i = 0;
+
+#if defined(__AVX2__) && defined(__FMA__)
+    const int32_t avx2_count = (count / 8) * 8;
+    for (; i < avx2_count; i += 8) {
+        AnglesAvx2 angle_pack;
+        std::memcpy(angle_pack.angles, in + i, 8 * sizeof(float));
+
+        SinCosAvx2 result_pack;
+        sincosAvx2(&angle_pack, &result_pack);
+
+        std::memcpy(out_cos_ + i, result_pack.coss, 8 * sizeof(float));
+    }
+#elif defined(__SSE4_1__)
+    const int32_t sse_count = (count / 4) * 4;
+    for (; i < sse_count; i += 4) {
+        AnglesSse angle_pack;
+        std::memcpy(angle_pack.angles, in + i, 4 * sizeof(float));
+
+        SinCosSse result_pack;
+        sincosSse(&angle_pack, &result_pack);
+
+        std::memcpy(out_cos_ + i, result_pack.coss, 4 * sizeof(float));
+    }
+#endif
+
+    for (; i < count; ++i) {
+        Angle angle = { in[i] };
+        SinCos sc;
+        sincosScalar(angle, &sc);
+        out_cos_[i] = sc.cos;
+    }
 }
 
 // ============================================================================

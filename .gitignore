@@ -1,0 +1,27 @@
+﻿# Build directories
+/build/
+
+# CMake / Visual Studio generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.dir/
+
+# Ninja/MSBuild intermediates
+*.ninja
+*.obj
+*.pdb
+*.ilk
+*.idb
+*.tlog
+
+# Compiled binaries
+*.exe
+*.dll
+*.lib
+
+# Local temp artifacts
+/tmpclaude-*

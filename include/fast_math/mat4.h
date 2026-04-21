@@ -1,5 +1,5 @@
 /**
- * @file mat4_simd.h
+ * @file mat4.h
  * @brief SIMD-optimized 4x4 matrix operations
  *
  * Design Philosophy:

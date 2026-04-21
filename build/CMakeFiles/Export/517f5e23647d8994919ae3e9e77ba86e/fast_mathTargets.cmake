@@ -7,7 +7,7 @@ if(CMAKE_VERSION VERSION_LESS "3.0.0")
    message(FATAL_ERROR "CMake >= 3.0.0 required")
 endif()
 cmake_policy(PUSH)
-cmake_policy(VERSION 3.0.0...3.31)
+cmake_policy(VERSION 3.0.0...3.30)
 #----------------------------------------------------------------
 # Generated CMake target import file.
 #----------------------------------------------------------------
@@ -59,8 +59,9 @@ endif()
 add_library(fast_math::fast_math INTERFACE IMPORTED)
 
 set_target_properties(fast_math::fast_math PROPERTIES
+  INTERFACE_COMPILE_DEFINITIONS "NOMINMAX"
   INTERFACE_COMPILE_FEATURES "cxx_std_20"
-  INTERFACE_COMPILE_OPTIONS "-O3;-march=native;-mtune=native;-ffast-math;-funroll-loops;-finline-functions;-ftree-vectorize;-fno-trapping-math;-fno-math-errno;-fomit-frame-pointer;-flto"
+  INTERFACE_COMPILE_OPTIONS "-O3;-march=native;-mtune=native;-ffast-math;-fno-math-errno;-fno-trapping-math;-funroll-loops;-finline-functions;-ftree-vectorize;-fomit-frame-pointer"
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include"
 )
 

@@ -43,6 +43,42 @@ struct Vec2 {
 };
 
 /**
+ * @brief 3D vector (POD, 12 bytes)
+ */
+struct Vec3 {
+    float x;
+    float y;
+    float z;
+};
+
+/**
+ * @brief 4D vector (POD, 16 bytes, SIMD-aligned)
+ *
+ * Also used for homogeneous coordinates (x, y, z, w)
+ * For positions: w = 1.0
+ * For directions: w = 0.0
+ */
+struct MMATH_ALIGN(16) Vec4 {
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+/**
+ * @brief Quaternion (POD, 16 bytes, SIMD-aligned)
+ *
+ * Format: (x, y, z, w) where w is the real part
+ * Identity quaternion: {0, 0, 0, 1}
+ */
+struct MMATH_ALIGN(16) Quat {
+    float x;  // imaginary i
+    float y;  // imaginary j
+    float z;  // imaginary k
+    float w;  // real (scalar)
+};
+
+/**
  * @brief Single angle (POD)
  */
 struct Angle {
@@ -60,15 +96,44 @@ struct SinCos {
 /**
  * @brief 3x3 matrix (POD, 36 bytes, row-major)
  *
- * Layout:
+ * Layout (ROW-MAJOR for CPU-side 2D transforms):
  * [m00  m01  m02]   [sx*cos  -sy*sin  tx]
  * [m10  m11  m12] = [sx*sin   sy*cos  ty]
  * [m20  m21  m22]   [0        0       1 ] (for affine 2D transforms)
+ *
+ * @note Row-major layout differs from Mat4 (column-major).
+ *       Mat3 is optimized for CPU-side 2D calculations.
+ *       Mat4 is optimized for GPU upload (OpenGL/Vulkan/DirectX).
  */
 struct Mat3 {
     float m00, m01, m02;  // Row 0
     float m10, m11, m12;  // Row 1
     float m20, m21, m22;  // Row 2
+};
+
+/**
+ * @brief 4x4 matrix (POD, 64 bytes, column-major, GPU-compatible)
+ *
+ * Layout (COLUMN-MAJOR for GPU upload):
+ * m[col * 4 + row]
+ *
+ * | m[0] m[4] m[8]  m[12] |
+ * | m[1] m[5] m[9]  m[13] |
+ * | m[2] m[6] m[10] m[14] |
+ * | m[3] m[7] m[11] m[15] |
+ *
+ * For affine transforms:
+ * - Columns 0-2: rotation/scale
+ * - Column 3: translation (m[12], m[13], m[14])
+ *
+ * Identity: {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1}
+ *
+ * @note Column-major layout differs from Mat3 (row-major).
+ *       Mat4 is optimized for GPU upload (OpenGL/Vulkan/DirectX).
+ *       Mat3 is optimized for CPU-side 2D calculations.
+ */
+struct MMATH_ALIGN(16) Mat4 {
+    float m[16];
 };
 
 /**
@@ -85,6 +150,51 @@ struct Mat3 {
 struct Aabb2 {
     float minx, miny;         // Minimum coordinates
     float neg_maxx, neg_maxy; // Stored as -maxx, -maxy (SIMD optimization)
+};
+
+/**
+ * @brief 3D Axis-Aligned Bounding Box (POD, 24 bytes)
+ *
+ * Internal Optimization: Stores -max instead of positive values
+ * This enables single-instruction Union and efficient Overlap test
+ *
+ * Users should use aabb3FromMinMax() constructor and aabb3Min/Max()
+ * accessors to avoid confusion with the internal representation.
+ */
+struct Aabb3 {
+    float minx, miny, minz;          // Minimum coordinates
+    float neg_maxx, neg_maxy, neg_maxz; // Stored as -max (SIMD optimization)
+};
+
+// ============================================================================
+// Integer Vectors
+// ============================================================================
+
+/**
+ * @brief 2D integer vector (POD, 8 bytes)
+ */
+struct Vec2i {
+    int32_t x;
+    int32_t y;
+};
+
+/**
+ * @brief 3D integer vector (POD, 12 bytes)
+ */
+struct Vec3i {
+    int32_t x;
+    int32_t y;
+    int32_t z;
+};
+
+/**
+ * @brief 4D integer vector (POD, 16 bytes, SIMD-aligned)
+ */
+struct MMATH_ALIGN(16) Vec4i {
+    int32_t x;
+    int32_t y;
+    int32_t z;
+    int32_t w;
 };
 
 /**

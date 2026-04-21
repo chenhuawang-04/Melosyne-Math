@@ -51,15 +51,13 @@ MMATH_FORCE_INLINE void deinterleave8Vec2(
     __m256 xy01 = _mm256_shuffle_ps(v0, v1, _MM_SHUFFLE(2, 0, 2, 0));  // x0,x1,x4,x5, x2,x3,x6,x7
     __m256 xy23 = _mm256_shuffle_ps(v0, v1, _MM_SHUFFLE(3, 1, 3, 1));  // y0,y1,y4,y5, y2,y3,y6,y7
 
-    // Permute to get correct order
-    out_x_ = _mm256_permute2f128_ps(xy01, xy01, 0x20);  // x0,x1,x4,x5, x2,x3,x6,x7 -> x0,x1,x2,x3,x4,x5,x6,x7
-    out_y_ = _mm256_permute2f128_ps(xy23, xy23, 0x20);  // y0,y1,y4,y5, y2,y3,y6,y7 -> y0,y1,y2,y3,y4,y5,y6,y7
-
-    // Fix: proper deinterleave
-    out_x_ = _mm256_permute2f128_ps(xy01, xy01, 0x20);
-    out_x_ = _mm256_shuffle_ps(out_x_, out_x_, _MM_SHUFFLE(3, 1, 2, 0));
-    out_y_ = _mm256_permute2f128_ps(xy23, xy23, 0x20);
-    out_y_ = _mm256_shuffle_ps(out_y_, out_y_, _MM_SHUFFLE(3, 1, 2, 0));
+    // Reorder lanes to contiguous x/y vectors:
+    // xy01 = [x0,x1,x4,x5, x2,x3,x6,x7]
+    // xy23 = [y0,y1,y4,y5, y2,y3,y6,y7]
+    // order -> [0,1,4,5,2,3,6,7]
+    const __m256i order = _mm256_setr_epi32(0, 1, 4, 5, 2, 3, 6, 7);
+    out_x_ = _mm256_permutevar8x32_ps(xy01, order);
+    out_y_ = _mm256_permutevar8x32_ps(xy23, order);
 }
 
 /**
