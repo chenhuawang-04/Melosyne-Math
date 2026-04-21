@@ -185,7 +185,7 @@ MMATH_FORCE_INLINE float aabb2Perimeter(Aabb2 aabb_) noexcept {
 /**
  * @brief Test if AABB contains a point
  */
-MMATH_FORCE_INLINE bool aabb2ContainsPoint(Aabb2 aabb_, Vec2 point_) noexcept {
+MMATH_FORCE_INLINE bool aabb2ContainsPoint(const Aabb2& aabb_, Vec2 point_) noexcept {
 #if defined(__SSE4_1__)
     __m128 v_aabb = _mm_loadu_ps(&aabb_.minx);  // [minx, miny, neg_maxx, neg_maxy]
     __m128 v_point = _mm_setr_ps(point_.x, point_.y, -point_.x, -point_.y);
@@ -200,7 +200,7 @@ MMATH_FORCE_INLINE bool aabb2ContainsPoint(Aabb2 aabb_, Vec2 point_) noexcept {
 /**
  * @brief Test if AABB 'a_' contains AABB 'b_'
  */
-MMATH_FORCE_INLINE bool aabb2Contains(Aabb2 a_, Aabb2 b_) noexcept {
+MMATH_FORCE_INLINE bool aabb2Contains(const Aabb2& a_, const Aabb2& b_) noexcept {
 #if defined(__SSE4_1__)
     __m128 va = _mm_loadu_ps(&a_.minx);
     __m128 vb = _mm_loadu_ps(&b_.minx);
@@ -218,7 +218,7 @@ MMATH_FORCE_INLINE bool aabb2Contains(Aabb2 a_, Aabb2 b_) noexcept {
  * Reference: https://mtsamis.com/blog/23_11_07_aabbs
  * Optimized to 3 SSE instructions
  */
-MMATH_FORCE_INLINE bool aabb2Intersects(Aabb2 a_, Aabb2 b_) noexcept {
+MMATH_FORCE_INLINE bool aabb2Intersects(const Aabb2& a_, const Aabb2& b_) noexcept {
 #if defined(__SSE4_1__)
     __m128 va = _mm_loadu_ps(&a_.minx);  // [minx, miny, neg_maxx, neg_maxy]
     __m128 vb = _mm_loadu_ps(&b_.minx);
@@ -242,7 +242,7 @@ MMATH_FORCE_INLINE bool aabb2Intersects(Aabb2 a_, Aabb2 b_) noexcept {
 /**
  * @brief Compute overlap area (returns 0 if no overlap)
  */
-MMATH_FORCE_INLINE float aabb2OverlapArea(Aabb2 a_, Aabb2 b_) noexcept {
+MMATH_FORCE_INLINE float aabb2OverlapArea(const Aabb2& a_, const Aabb2& b_) noexcept {
     float minx = std::max(a_.minx, b_.minx);
     float miny = std::max(a_.miny, b_.miny);
     float maxx = std::min(-a_.neg_maxx, -b_.neg_maxx);
@@ -263,29 +263,19 @@ MMATH_FORCE_INLINE float aabb2OverlapArea(Aabb2 a_, Aabb2 b_) noexcept {
  * Reference: https://mtsamis.com/blog/23_11_07_aabbs
  * Thanks to negative max storage, this is just min(a, b)
  */
-MMATH_FORCE_INLINE Aabb2 aabb2Merge(Aabb2 a_, Aabb2 b_) noexcept {
-#if defined(__SSE4_1__)
-    __m128 va = _mm_loadu_ps(&a_.minx);
-    __m128 vb = _mm_loadu_ps(&b_.minx);
-    __m128 result = _mm_min_ps(va, vb);  // Single instruction!
-
-    Aabb2 out;
-    _mm_storeu_ps(&out.minx, result);
-    return out;
-#else
+MMATH_FORCE_INLINE Aabb2 aabb2Merge(const Aabb2& a_, const Aabb2& b_) noexcept {
     return Aabb2{
         std::min(a_.minx, b_.minx),
         std::min(a_.miny, b_.miny),
         std::min(a_.neg_maxx, b_.neg_maxx),
         std::min(a_.neg_maxy, b_.neg_maxy)
     };
-#endif
 }
 
 /**
  * @brief Intersect two AABBs (may produce invalid AABB if no overlap)
  */
-MMATH_FORCE_INLINE Aabb2 aabb2Intersect(Aabb2 a_, Aabb2 b_) noexcept {
+MMATH_FORCE_INLINE Aabb2 aabb2Intersect(const Aabb2& a_, const Aabb2& b_) noexcept {
 #if defined(__SSE4_1__)
     __m128 va = _mm_loadu_ps(&a_.minx);
     __m128 vb = _mm_loadu_ps(&b_.minx);
@@ -307,7 +297,7 @@ MMATH_FORCE_INLINE Aabb2 aabb2Intersect(Aabb2 a_, Aabb2 b_) noexcept {
 /**
  * @brief Expand AABB by a uniform amount on all sides
  */
-MMATH_FORCE_INLINE Aabb2 aabb2Expand(Aabb2 aabb_, float amount_) noexcept {
+MMATH_FORCE_INLINE Aabb2 aabb2Expand(const Aabb2& aabb_, float amount_) noexcept {
     return Aabb2{
         aabb_.minx - amount_,
         aabb_.miny - amount_,
@@ -319,14 +309,14 @@ MMATH_FORCE_INLINE Aabb2 aabb2Expand(Aabb2 aabb_, float amount_) noexcept {
 /**
  * @brief Expand AABB to include a point
  */
-MMATH_FORCE_INLINE Aabb2 aabb2ExpandToPoint(Aabb2 aabb_, Vec2 point_) noexcept {
+MMATH_FORCE_INLINE Aabb2 aabb2ExpandToPoint(const Aabb2& aabb_, Vec2 point_) noexcept {
     return aabb2Merge(aabb_, aabb2FromPoint(point_));
 }
 
 /**
  * @brief Expand AABB to include another AABB (same as merge)
  */
-MMATH_FORCE_INLINE Aabb2 aabb2ExpandToAabb(Aabb2 a_, Aabb2 b_) noexcept {
+MMATH_FORCE_INLINE Aabb2 aabb2ExpandToAabb(const Aabb2& a_, const Aabb2& b_) noexcept {
     return aabb2Merge(a_, b_);
 }
 
@@ -335,7 +325,7 @@ MMATH_FORCE_INLINE Aabb2 aabb2ExpandToAabb(Aabb2 a_, Aabb2 b_) noexcept {
  *
  * Strategy: Transform all 4 corners, then recompute min/max
  */
-inline Aabb2 aabb2Transform(Aabb2 aabb_, Mat3 matrix_) noexcept {
+inline Aabb2 aabb2Transform(const Aabb2& aabb_, const Mat3& matrix_) noexcept {
     // Get actual min/max coordinates
     float minx = aabb_.minx;
     float miny = aabb_.miny;
@@ -357,7 +347,7 @@ inline Aabb2 aabb2Transform(Aabb2 aabb_, Mat3 matrix_) noexcept {
 /**
  * @brief Equality comparison
  */
-MMATH_FORCE_INLINE bool aabb2Equal(Aabb2 a_, Aabb2 b_) noexcept {
+MMATH_FORCE_INLINE bool aabb2Equal(const Aabb2& a_, const Aabb2& b_) noexcept {
     return a_.minx == b_.minx && a_.miny == b_.miny &&
            a_.neg_maxx == b_.neg_maxx && a_.neg_maxy == b_.neg_maxy;
 }
@@ -365,7 +355,7 @@ MMATH_FORCE_INLINE bool aabb2Equal(Aabb2 a_, Aabb2 b_) noexcept {
 /**
  * @brief Near-equality comparison with epsilon
  */
-MMATH_FORCE_INLINE bool aabb2NearEqual(Aabb2 a_, Aabb2 b_, float epsilon_) noexcept {
+MMATH_FORCE_INLINE bool aabb2NearEqual(const Aabb2& a_, const Aabb2& b_, float epsilon_) noexcept {
     auto is_near_ = [epsilon_](float x, float y) {
         float d = x - y;
         return (d < 0 ? -d : d) <= epsilon_;

@@ -324,15 +324,30 @@ inline std::size_t intersectionCountSimd(
  */
 BITOPS_FORCEINLINE std::size_t popcountOptimized(ConstBitSetView view) noexcept {
 #if defined(__AVX2__)
-    // For very large bitsets, use Harley-Seal SIMD algorithm
-    if (view.word_count > 128) {
+    // Small/medium bitsets: scalar POPCNT is typically best.
+    if (view.word_count <= 256) {
+        return popcount(view);
+    }
+
+    // Very large bitsets: use Harley-Seal SIMD algorithm.
+    if (view.word_count > 256) {
         return detail::popcountSimd(view);
     }
 #endif
 
-    // For medium/small bitsets, use standard scalar popcount
-    // std::popcount compiles to POPCNT instruction (1 cycle) - no need for hints
+    // Scalar fallback
     return popcount(view);
+}
+
+template<std::size_t N>
+BITOPS_FORCEINLINE std::size_t popcountOptimized(const BitSet<N>& view) noexcept {
+#if defined(__AVX2__)
+    constexpr std::size_t kWords = (N + 63) / 64;
+    if constexpr (kWords > 256) {
+        return detail::popcountSimd(ConstBitSetView(view));
+    }
+#endif
+    return popcount(ConstBitSetView(view));
 }
 
 /**

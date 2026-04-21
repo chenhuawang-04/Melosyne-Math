@@ -521,120 +521,35 @@ MMATH_FORCE_INLINE Mat4 mat4Ortho(float left_, float right_, float bottom_, floa
  * Strategy: Pure SIMD, zero scalar fallback
  */
 MMATH_FORCE_INLINE Mat4 mat4LookAt(const Vec4& eye_, const Vec4& target_, const Vec4& up_) noexcept {
-#ifdef MMATH_SIMD_SSE2
-    // Load vectors
-    __m128 eye_vec = _mm_load_ps(&eye_.x);
-    __m128 target_vec = _mm_load_ps(&target_.x);
-    __m128 up_vec = _mm_load_ps(&up_.x);
+    float fx = target_.x - eye_.x;
+    float fy = target_.y - eye_.y;
+    float fz = target_.z - eye_.z;
+    const float f_inv_len = 1.0f / std::sqrt(fx * fx + fy * fy + fz * fz);
+    fx *= f_inv_len;
+    fy *= f_inv_len;
+    fz *= f_inv_len;
 
-    // Forward = normalize(target - eye)
-    __m128 f_vec = _mm_sub_ps(target_vec, eye_vec);
-    f_vec = _mm_normalize3_ps(f_vec);
+    float rx = fy * up_.z - fz * up_.y;
+    float ry = fz * up_.x - fx * up_.z;
+    float rz = fx * up_.y - fy * up_.x;
+    const float r_inv_len = 1.0f / std::sqrt(rx * rx + ry * ry + rz * rz);
+    rx *= r_inv_len;
+    ry *= r_inv_len;
+    rz *= r_inv_len;
 
-    // Right = normalize(forward × up)
-    __m128 r_vec = _mm_cross_ps(f_vec, up_vec);
-    r_vec = _mm_normalize3_ps(r_vec);
-
-    // Up = right × forward
-    __m128 u_vec = _mm_cross_ps(r_vec, f_vec);
-
-    // Negate forward for view matrix
-    __m128 zero = _mm_setzero_ps();
-    __m128 neg_f = _mm_sub_ps(zero, f_vec);
-
-    // Compute dot products in SIMD
-    #ifdef MMATH_SIMD_SSE4_1
-        __m128 tx = _mm_dp_ps(r_vec, eye_vec, 0x71);  // dot xyz, result in x
-        __m128 ty = _mm_dp_ps(u_vec, eye_vec, 0x72);  // dot xyz, result in y
-        __m128 tz = _mm_dp_ps(neg_f, eye_vec, 0x74);  // dot xyz, result in z
-
-        // Negate and combine: tx, ty, tz, 1
-        tx = _mm_sub_ps(zero, tx);
-        ty = _mm_sub_ps(zero, ty);
-        tz = _mm_sub_ps(zero, tz);
-
-        __m128 col3 = _mm_blend_ps(tx, ty, 0x2);  // tx ty 0 0
-        col3 = _mm_blend_ps(col3, tz, 0x4);       // tx ty tz 0
-        col3 = _mm_blend_ps(col3, _mm_set_ss(1.0f), 0x8);  // tx ty tz 1
-    #else
-        // SSE2 fallback for dot products
-        __m128 tx_vec = _mm_mul_ps(r_vec, eye_vec);
-        __m128 ty_vec = _mm_mul_ps(u_vec, eye_vec);
-        __m128 tz_vec = _mm_mul_ps(neg_f, eye_vec);
-
-        // Horizontal add (SSE2)
-        __m128 shuf = _mm_shuffle_ps(tx_vec, tx_vec, _MM_SHUFFLE(2, 3, 0, 1));
-        tx_vec = _mm_add_ps(tx_vec, shuf);
-        shuf = _mm_movehl_ps(shuf, tx_vec);
-        tx_vec = _mm_add_ss(tx_vec, shuf);
-
-        shuf = _mm_shuffle_ps(ty_vec, ty_vec, _MM_SHUFFLE(2, 3, 0, 1));
-        ty_vec = _mm_add_ps(ty_vec, shuf);
-        shuf = _mm_movehl_ps(shuf, ty_vec);
-        ty_vec = _mm_add_ss(ty_vec, shuf);
-
-        shuf = _mm_shuffle_ps(tz_vec, tz_vec, _MM_SHUFFLE(2, 3, 0, 1));
-        tz_vec = _mm_add_ps(tz_vec, shuf);
-        shuf = _mm_movehl_ps(shuf, tz_vec);
-        tz_vec = _mm_add_ss(tz_vec, shuf);
-
-        // Negate translation
-        tx_vec = _mm_sub_ps(zero, tx_vec);
-        ty_vec = _mm_sub_ps(zero, ty_vec);
-        tz_vec = _mm_sub_ps(zero, tz_vec);
-
-        // Combine into col3: tx ty tz 1
-        __m128 col3 = _mm_shuffle_ps(tx_vec, ty_vec, _MM_SHUFFLE(0, 0, 0, 0));
-        __m128 tz_one = _mm_shuffle_ps(tz_vec, _mm_set_ss(1.0f), _MM_SHUFFLE(0, 0, 0, 0));
-        col3 = _mm_shuffle_ps(col3, tz_one, _MM_SHUFFLE(2, 0, 2, 0));
-    #endif
-
-    // Set w components to 0 for rotation columns
-    #ifdef MMATH_SIMD_SSE4_1
-        r_vec = _mm_blend_ps(r_vec, zero, 0x8);
-        u_vec = _mm_blend_ps(u_vec, zero, 0x8);
-        neg_f = _mm_blend_ps(neg_f, zero, 0x8);
-    #else
-        __m128 mask_w = _mm_castsi128_ps(_mm_set_epi32(0, -1, -1, -1));
-        r_vec = _mm_and_ps(r_vec, mask_w);
-        u_vec = _mm_and_ps(u_vec, mask_w);
-        neg_f = _mm_and_ps(neg_f, mask_w);
-    #endif
-
-    // Store all columns
-    Mat4 result;
-    _mm_store_ps(&result.m[0], r_vec);
-    _mm_store_ps(&result.m[4], u_vec);
-    _mm_store_ps(&result.m[8], neg_f);
-    _mm_store_ps(&result.m[12], col3);
-
-    return result;
-#else
-    // Fallback to scalar
-    Vec4 f = vec4Normalize(vec4Sub(target_, eye_));
-    Vec4 r = vec4Normalize(Vec4{
-        f.y * up_.z - f.z * up_.y,
-        f.z * up_.x - f.x * up_.z,
-        f.x * up_.y - f.y * up_.x,
-        0.0f
-    });
-    Vec4 u = Vec4{
-        r.y * f.z - r.z * f.y,
-        r.z * f.x - r.x * f.z,
-        r.x * f.y - r.y * f.x,
-        0.0f
-    };
+    const float ux = ry * fz - rz * fy;
+    const float uy = rz * fx - rx * fz;
+    const float uz = rx * fy - ry * fx;
 
     Mat4 result;
-    result.m[0] = r.x;  result.m[1] = r.y;  result.m[2] = r.z;  result.m[3] = 0.0f;
-    result.m[4] = u.x;  result.m[5] = u.y;  result.m[6] = u.z;  result.m[7] = 0.0f;
-    result.m[8] = -f.x; result.m[9] = -f.y; result.m[10] = -f.z; result.m[11] = 0.0f;
-    result.m[12] = -vec4Dot(r, eye_);
-    result.m[13] = -vec4Dot(u, eye_);
-    result.m[14] = vec4Dot(f, eye_);
+    result.m[0] = rx;   result.m[1] = ry;   result.m[2] = rz;   result.m[3] = 0.0f;
+    result.m[4] = ux;   result.m[5] = uy;   result.m[6] = uz;   result.m[7] = 0.0f;
+    result.m[8] = -fx;  result.m[9] = -fy;  result.m[10] = -fz; result.m[11] = 0.0f;
+    result.m[12] = -(rx * eye_.x + ry * eye_.y + rz * eye_.z);
+    result.m[13] = -(ux * eye_.x + uy * eye_.y + uz * eye_.z);
+    result.m[14] =  (fx * eye_.x + fy * eye_.y + fz * eye_.z);
     result.m[15] = 1.0f;
     return result;
-#endif
 }
 
 } // namespace MMath

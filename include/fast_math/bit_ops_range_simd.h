@@ -327,7 +327,7 @@ BITOPS_FORCEINLINE void setRangeOptimized(
  * @param end Ending bit index
  * @note Automatically uses AVX2 for large ranges
  */
-inline void resetRangeOptimized(
+BITOPS_FORCEINLINE void resetRangeOptimized(
     BitSetView view, std::size_t start, std::size_t end) noexcept {
 #if defined(__AVX2__)
     if (start < end && start < view.bit_count) {
@@ -349,19 +349,48 @@ inline void resetRangeOptimized(
  * @param end Ending bit index
  * @note Automatically uses AVX2 for large ranges
  */
-inline void flipRangeOptimized(
+BITOPS_FORCEINLINE void flipRangeOptimized(
     BitSetView view, std::size_t start, std::size_t end) noexcept {
 #if defined(__AVX2__)
+    // Fast path for tiny/local ranges (common in iterators/bit twiddling loops).
+    if (end > start && (end - start) <= 256) {
+        flipRange(view, start, end);
+        return;
+    }
+
     if (start < end && start < view.bit_count) {
         std::size_t start_word = (start + 63) / 64;
         std::size_t end_word = end / 64;
-        if (end_word > start_word && (end_word - start_word) >= 4) {
+        if (view.word_count > 256 && end_word > start_word && (end_word - start_word) >= 4) {
             detail::flipRangeSimd(view, start, end);
             return;
         }
     }
 #endif
     flipRange(view, start, end);
+}
+
+template<std::size_t N>
+BITOPS_FORCEINLINE void flipRangeOptimized(
+    BitSet<N>& view, std::size_t start, std::size_t end) noexcept {
+#if defined(__AVX2__)
+    constexpr std::size_t kWords = (N + 63) / 64;
+    if constexpr (kWords > 256) {
+        if (end > start && (end - start) <= 256) {
+            flipRange(BitSetView(view), start, end);
+            return;
+        }
+        if (start < end && start < N) {
+            const std::size_t start_word = (start + 63) / 64;
+            const std::size_t end_word = end / 64;
+            if (end_word > start_word && (end_word - start_word) >= 4) {
+                detail::flipRangeSimd(BitSetView(view), start, end);
+                return;
+            }
+        }
+    }
+#endif
+    flipRange(BitSetView(view), start, end);
 }
 
 /**
@@ -372,7 +401,7 @@ inline void flipRangeOptimized(
  * @return Number of set bits in range
  * @note Automatically uses AVX2 popcount for large ranges
  */
-[[nodiscard]] inline std::size_t popcountRangeOptimized(
+[[nodiscard]] BITOPS_FORCEINLINE std::size_t popcountRangeOptimized(
     ConstBitSetView view, std::size_t start, std::size_t end) noexcept {
 #if defined(__AVX2__)
     if (start < end && start < view.bit_count) {

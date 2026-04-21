@@ -199,14 +199,32 @@ BITOPS_FORCEINLINE std::size_t selectOptimized(ConstBitSetView view, std::size_t
  * @return Number of set bits in [0, pos)
  * @note Automatically uses AVX2 when pos spans many words
  */
-inline std::size_t rankOptimized(ConstBitSetView view, std::size_t pos) noexcept {
+BITOPS_FORCEINLINE std::size_t rankOptimized(ConstBitSetView view, std::size_t pos) noexcept {
 #if defined(__AVX2__)
-    // Use SIMD if pos spans more than 8 words
-    if (pos / 64 > 8) {
+    if (view.word_count <= 256) {
+        return rank(view, pos);
+    }
+
+    // Empirical threshold: scalar POPCNT is typically faster for small/medium views.
+    // Enable SIMD only when both the view and queried prefix are large enough.
+    if (view.word_count > 256 && (pos / 64) > 64) {
         return detail::rankSimd(view, pos);
     }
 #endif
     return rank(view, pos);
+}
+
+template<std::size_t N>
+BITOPS_FORCEINLINE std::size_t rankOptimized(const BitSet<N>& view, std::size_t pos) noexcept {
+#if defined(__AVX2__)
+    constexpr std::size_t kWords = (N + 63) / 64;
+    if constexpr (kWords > 256) {
+        if ((pos >> 6) > 64) {
+            return detail::rankSimd(ConstBitSetView(view), pos);
+        }
+    }
+#endif
+    return rank(ConstBitSetView(view), pos);
 }
 
 // ============================================================================

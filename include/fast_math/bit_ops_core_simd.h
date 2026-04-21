@@ -23,6 +23,7 @@
 
 #include "bitset_view.h"
 #include "bit_ops_core.h"
+#include <cstdint>
 #include <cstring>
 #include <algorithm>
 
@@ -177,36 +178,39 @@ inline void copySimd(BitSetView dst, ConstBitSetView src) noexcept {
  * @note Uses compiler hints to ensure vectorization (faster than manual AVX2)
  */
 BITOPS_FORCEINLINE void bitwiseAndOptimized(BitSetView dst, ConstBitSetView src) noexcept {
-    const std::size_t min_words = std::min(dst.word_count, src.word_count);
-
-    // Use restrict to help compiler optimize
-    uint64_t* __restrict dst_ptr = dst.data;
-    const uint64_t* __restrict src_ptr = src.data;
-
-    // Compiler hints for vectorization
-#if defined(_MSC_VER)
-    #pragma loop(ivdep)
-    #pragma loop(hint_parallel(4))
-#elif defined(__clang__)
-    #pragma clang loop vectorize(enable) interleave(enable)
-#elif defined(__GNUC__)
-    #pragma GCC ivdep
-#endif
-    for (std::size_t i = 0; i < min_words; ++i) {
-        dst_ptr[i] &= src_ptr[i];
+#if defined(__AVX2__)
+    // Practical dispatch:
+    // - Small/medium bitsets are faster on scalar POPCNT + compiler auto-vectorization.
+    // - Large aligned bitsets benefit from explicit AVX2 path.
+    if (dst.word_count >= 256 && src.word_count >= 256) {
+        const auto dst_addr = reinterpret_cast<std::uintptr_t>(dst.data);
+        const auto src_addr = reinterpret_cast<std::uintptr_t>(src.data);
+        if ((dst_addr % 32u) == 0u && (src_addr % 32u) == 0u) {
+            detail::bitwiseAndSimd(dst, src);
+            return;
+        }
     }
-
-    // Clear beyond src length
-#if defined(_MSC_VER)
-    #pragma loop(ivdep)
-#elif defined(__clang__)
-    #pragma clang loop vectorize(enable)
-#elif defined(__GNUC__)
-    #pragma GCC ivdep
 #endif
-    for (std::size_t i = min_words; i < dst.word_count; ++i) {
-        dst_ptr[i] = 0;
+
+    // Default path: let scalar implementation and compiler do the right thing.
+    bitwiseAnd(dst, src);
+}
+
+template<std::size_t DstBits, std::size_t SrcBits>
+BITOPS_FORCEINLINE void bitwiseAndOptimized(
+    BitSet<DstBits>& dst,
+    const BitSet<SrcBits>& src) noexcept {
+#if defined(__AVX2__)
+    constexpr std::size_t kDstWords = (DstBits + 63) / 64;
+    constexpr std::size_t kSrcWords = (SrcBits + 63) / 64;
+
+    if constexpr (kDstWords >= 256 && kSrcWords >= 256) {
+        // BitSet<> is alignas(32), so AVX2 aligned loads/stores are valid.
+        detail::bitwiseAndSimd(BitSetView(dst), ConstBitSetView(src));
+        return;
     }
+#endif
+    bitwiseAnd(BitSetView(dst), ConstBitSetView(src));
 }
 
 } // namespace BitOps
