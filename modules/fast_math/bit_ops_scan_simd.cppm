@@ -1,3 +1,27 @@
+module;
+
+#include "fast_math/config_macros.h"
+#include <cstdint>
+#include <cstddef>
+#include <cstring>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+#include <bit>
+#include <iterator>
+#include <type_traits>
+#include <memory>
+#include <memory_resource>
+#include <cfloat>
+#include <immintrin.h>
+
+export module fast_math.bit_ops_scan_simd;
+
+export import fast_math.bitset_view;
+export import fast_math.bit_ops_scan;
+export import fast_math.bit_ops_count_simd;
+
+export {
 /**
  * @file bit_ops_scan_simd.h
  * @brief SIMD-optimized bit scanning operations (limited optimizations)
@@ -27,17 +51,9 @@
  * - Vigna "Broadword Implementation of Rank/Select Queries"
  */
 
-#pragma once
 
-#include "config_macros.h"
-#include "bitset_view.h"
-#include "bit_ops_scan.h"
-#include "bit_ops_count_simd.h"  // For popcount256
-#include <bit>
-#include <cstdint>
 
 #if defined(__AVX2__)
-#include <immintrin.h>
 #endif
 
 namespace Melosyne {
@@ -259,3 +275,4 @@ BITOPS_FORCEINLINE std::size_t rankOptimized(const BitSet<N>& view, std::size_t 
 
 } // namespace BitOps
 } // namespace Melosyne
+}

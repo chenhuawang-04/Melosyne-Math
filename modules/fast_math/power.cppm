@@ -1,3 +1,24 @@
+module;
+
+#include "fast_math/config_macros.h"
+#include <cstdint>
+#include <cstddef>
+#include <cstring>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+#include <bit>
+#include <iterator>
+#include <type_traits>
+#include <memory>
+#include <memory_resource>
+#include <cfloat>
+
+export module fast_math.power;
+
+export import fast_math.types;
+
+export {
 /**
  * @file power.h
  * @brief Exponential and power functions (exp, log, pow)
@@ -46,13 +67,7 @@
  * - Filter coefficient calculations
  */
 
-#pragma once
 
-#include "types.h"
-#include <cstring>  // for memcpy (type punning)
-#include <cmath>    // for reference std:: functions
-#include <cfloat>   // for FLT_MAX (used instead of infinity in fast-math mode)
-#include <limits>
 
 namespace MMath {
 
@@ -343,4 +358,4 @@ MMATH_FORCE_INLINE float powi(float x_, int32_t n_) noexcept {
 } // namespace MMath
 
 // Include SIMD batch processing implementations
-#include "power_simd.h"
+}

@@ -1,3 +1,26 @@
+module;
+
+#include "fast_math/config_macros.h"
+#include <cstdint>
+#include <cstddef>
+#include <cstring>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+#include <bit>
+#include <iterator>
+#include <type_traits>
+#include <memory>
+#include <memory_resource>
+#include <cfloat>
+#include <immintrin.h>
+
+export module fast_math.bit_ops_core_simd;
+
+export import fast_math.bitset_view;
+export import fast_math.bit_ops_core;
+
+export {
 /**
  * @file bit_ops_core_simd.h
  * @brief SIMD-optimized bitwise operations (AVX2/SSE4.1)
@@ -19,17 +42,9 @@
  * - Compiler auto-vectorization handles scalar
  */
 
-#pragma once
 
-#include "config_macros.h"
-#include "bitset_view.h"
-#include "bit_ops_core.h"
-#include <cstdint>
-#include <cstring>
-#include <algorithm>
 
 #if defined(__AVX2__)
-#include <immintrin.h>
 #endif
 
 namespace Melosyne {
@@ -216,3 +231,4 @@ BITOPS_FORCEINLINE void bitwiseAndOptimized(
 
 } // namespace BitOps
 } // namespace Melosyne
+}

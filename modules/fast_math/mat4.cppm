@@ -1,3 +1,31 @@
+module;
+
+#include "fast_math/config_macros.h"
+#include <cstdint>
+#include <cstddef>
+#include <cstring>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+#include <bit>
+#include <iterator>
+#include <type_traits>
+#include <memory>
+#include <memory_resource>
+#include <cfloat>
+#include <xmmintrin.h>
+#include <emmintrin.h>
+#include <pmmintrin.h>
+#include <tmmintrin.h>
+#include <smmintrin.h>
+#include <immintrin.h>
+
+export module fast_math.mat4;
+
+export import fast_math.types;
+export import fast_math.vec4;
+
+export {
 /**
  * @file mat4.h
  * @brief SIMD-optimized 4x4 matrix operations
@@ -22,38 +50,26 @@
  * - Eigen: Expression templates + auto-vectorization
  */
 
-#pragma once
 
-#include "types.h"
-#include "vec4.h"
-#include "config_macros.h"
-#include <cmath>
 
 // SIMD intrinsics detection
 #if defined(__SSE__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 1)
-    #include <xmmintrin.h>  // SSE
-    #include <emmintrin.h>  // SSE2
 #endif
 
 #if defined(__SSE3__)
-    #include <pmmintrin.h>  // SSE3
 #endif
 
 #if defined(__SSSE3__)
-    #include <tmmintrin.h>  // SSSE3
 #endif
 
 #if defined(__SSE4_1__)
-    #include <smmintrin.h>  // SSE4.1
 #endif
 
 #if defined(__AVX__)
-    #include <immintrin.h>  // AVX
 #endif
 
 #if defined(__FMA__)
     #ifndef MMATH_SIMD_AVX
-        #include <immintrin.h>
     #endif
 #endif
 
@@ -548,3 +564,4 @@ MMATH_FORCE_INLINE Mat4 mat4LookAt(const Vec4& eye_, const Vec4& target_, const 
 }
 
 } // namespace MMath
+}

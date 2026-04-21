@@ -1,3 +1,29 @@
+module;
+
+#include "fast_math/config_macros.h"
+#include <cstdint>
+#include <cstddef>
+#include <cstring>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+#include <bit>
+#include <iterator>
+#include <type_traits>
+#include <memory>
+#include <memory_resource>
+#include <cfloat>
+#include <xmmintrin.h>
+#include <emmintrin.h>
+#include <smmintrin.h>
+#include <immintrin.h>
+
+export module fast_math.mat4_d3d;
+
+export import fast_math.types;
+export import fast_math.vec4;
+
+export {
 /**
  * @file mat4_d3d.h
  * @brief D3D-compatible 4x4 Matrix Library - Maximum Performance SIMD Implementation
@@ -48,33 +74,23 @@
  * @date 2026-01-26
  */
 
-#pragma once
 
-#include "types.h"
-#include "vec4.h"
-#include "config_macros.h"
-#include <cmath>
 
 // ============================================================================
 // SIMD Intrinsics Detection
 // ============================================================================
 
 #if defined(__SSE__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 1)
-    #include <xmmintrin.h>  // SSE
-    #include <emmintrin.h>  // SSE2
 #endif
 
 #if defined(__SSE4_1__) || defined(__AVX__)
-    #include <smmintrin.h>  // SSE4.1
 #endif
 
 #if defined(__AVX__)
-    #include <immintrin.h>  // AVX
 #endif
 
 #if defined(__FMA__)
     #ifndef MMATH_D3D_AVX
-        #include <immintrin.h>
     #endif
 #endif
 
@@ -1176,3 +1192,4 @@ inline bool mat4IsIdentity(const Mat4& m, float epsilon = 1e-6f) noexcept {
 
 } // namespace D3D
 } // namespace MMath
+}

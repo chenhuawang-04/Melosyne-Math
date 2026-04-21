@@ -1,3 +1,22 @@
+module;
+
+#include "fast_math/config_macros.h"
+#include <cstdint>
+#include <cstddef>
+#include <cstring>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+#include <bit>
+#include <iterator>
+#include <type_traits>
+#include <memory>
+#include <memory_resource>
+#include <cfloat>
+
+export module fast_math.types;
+
+export {
 /**
  * @file types.h
  * @brief Strict POD data structures (NO member functions)
@@ -9,12 +28,8 @@
  * - Cache-line aligned for SIMD performance
  */
 
-#pragma once
 
-#include "config_macros.h"
 
-#include <cstdint>
-#include <cstring>
 
 namespace MMath {
 
@@ -245,3 +260,4 @@ struct MMATH_ALIGN(16) SinCosSse {
 #endif // SSE4.1
 
 } // namespace MMath
+}

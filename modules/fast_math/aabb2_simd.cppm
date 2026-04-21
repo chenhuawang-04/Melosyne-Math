@@ -1,3 +1,25 @@
+module;
+
+#include "fast_math/config_macros.h"
+#include <cstdint>
+#include <cstddef>
+#include <cstring>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+#include <bit>
+#include <iterator>
+#include <type_traits>
+#include <memory>
+#include <memory_resource>
+#include <cfloat>
+#include <immintrin.h>
+
+export module fast_math.aabb2_simd;
+
+export import fast_math.types;
+
+export {
 /**
  * @file aabb2_simd.h
  * @brief AVX2 batch processing for AABB2 operations
@@ -8,13 +30,9 @@
  * - Preprocess loop-invariant reference AABBs
  */
 
-#pragma once
 
-#include "types.h"
-#include <cmath>
 
 #if defined(__AVX2__) && defined(__FMA__)
-#include <immintrin.h>
 #endif
 
 namespace MMath {
@@ -208,3 +226,4 @@ inline void aabb2ContainsPointsArraySimd(
 
 } // namespace detail
 } // namespace MMath
+}

@@ -1,3 +1,25 @@
+module;
+
+#include "fast_math/config_macros.h"
+#include <cstdint>
+#include <cstddef>
+#include <cstring>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+#include <bit>
+#include <iterator>
+#include <type_traits>
+#include <memory>
+#include <memory_resource>
+#include <cfloat>
+#include <immintrin.h>
+
+export module fast_math.mat3_simd;
+
+export import fast_math.types;
+
+export {
 /**
  * @file mat3_simd.h
  * @brief Hand-written SIMD Mat3 batch processing (AOS deinterleave optimization)
@@ -17,13 +39,9 @@
  * - Intel intrinsics guide for optimal shuffle patterns
  */
 
-#pragma once
 
-#include "types.h"
-#include <cmath>
 
 #if defined(__AVX2__) && defined(__FMA__)
-#include <immintrin.h>
 #endif
 
 namespace MMath {
@@ -462,3 +480,4 @@ inline void mat3TransformPointsSingleSimd(
 
 } // namespace detail
 } // namespace MMath
+}

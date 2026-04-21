@@ -1,3 +1,25 @@
+module;
+
+#include "fast_math/config_macros.h"
+#include <cstdint>
+#include <cstddef>
+#include <cstring>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+#include <bit>
+#include <iterator>
+#include <type_traits>
+#include <memory>
+#include <memory_resource>
+#include <cfloat>
+#include <immintrin.h>
+
+export module fast_math.vec2_simd;
+
+export import fast_math.types;
+
+export {
 /**
  * @file vec2_simd.h
  * @brief Hand-written SIMD Vec2 batch processing (AOS deinterleave optimization)
@@ -13,13 +35,9 @@
  * - Intel Unpack Intrinsics: https://www.intel.com/content/www/us/en/develop/documentation/cpp-compiler-developer-guide-and-reference/top/compiler-reference/intrinsics/intrinsics-for-intel-advanced-vector-extensions/intrinsics-for-unpack-and-interleave-operations.html
  */
 
-#pragma once
 
-#include "types.h"
-#include <cmath>
 
 #if defined(__AVX2__) && defined(__FMA__)
-#include <immintrin.h>
 #endif
 
 namespace MMath {
@@ -262,3 +280,4 @@ inline void vec2NormalizeFastSimd(
 
 } // namespace detail
 } // namespace MMath
+}

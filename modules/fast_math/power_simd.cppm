@@ -1,3 +1,27 @@
+module;
+
+#include "fast_math/config_macros.h"
+#include <cstdint>
+#include <cstddef>
+#include <cstring>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+#include <bit>
+#include <iterator>
+#include <type_traits>
+#include <memory>
+#include <memory_resource>
+#include <cfloat>
+#include <immintrin.h>
+#include <smmintrin.h>
+
+export module fast_math.power_simd;
+
+export import fast_math.types;
+export import fast_math.power;
+
+export {
 /**
  * @file power_simd.h
  * @brief SIMD batch processing for exponential and power functions
@@ -18,15 +42,10 @@
  * - Distance attenuation calculations (powArray)
  */
 
-#pragma once
 
-#include "types.h"
-#include "power.h"  // For scalar fallback
 
 #if defined(__AVX2__)
-#include <immintrin.h>
 #elif defined(__SSE4_1__)
-#include <smmintrin.h>
 #endif
 
 namespace MMath {
@@ -673,3 +692,4 @@ inline void powArray(
 }
 
 } // namespace MMath
+}

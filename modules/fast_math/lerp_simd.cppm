@@ -1,3 +1,27 @@
+module;
+
+#include "fast_math/config_macros.h"
+#include <cstdint>
+#include <cstddef>
+#include <cstring>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+#include <bit>
+#include <iterator>
+#include <type_traits>
+#include <memory>
+#include <memory_resource>
+#include <cfloat>
+#include <immintrin.h>
+#include <smmintrin.h>
+
+export module fast_math.lerp_simd;
+
+export import fast_math.lerp;
+export import fast_math.types;
+
+export {
 /**
  * @file lerp_simd.h
  * @brief SIMD batch processing for interpolation functions
@@ -19,19 +43,12 @@
  * - Parameter smoothing over time
  */
 
-#pragma once
 
-#include "types.h"
-#include "config_macros.h"
 
 #if defined(__AVX2__) && defined(__FMA__)
-#include <immintrin.h>
 #elif defined(__AVX2__)
-#include <immintrin.h>
 #elif defined(__SSE4_1__) && defined(__FMA__)
-#include <immintrin.h>
 #elif defined(__SSE4_1__)
-#include <smmintrin.h>
 #endif
 
 namespace MMath {
@@ -558,3 +575,4 @@ inline void remapArray(
 }
 
 } // namespace MMath
+}

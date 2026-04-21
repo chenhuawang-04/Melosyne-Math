@@ -1,3 +1,26 @@
+module;
+
+#include "fast_math/config_macros.h"
+#include <cstdint>
+#include <cstddef>
+#include <cstring>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+#include <bit>
+#include <iterator>
+#include <type_traits>
+#include <memory>
+#include <memory_resource>
+#include <cfloat>
+#include <immintrin.h>
+#include <smmintrin.h>
+
+export module fast_math.trig_simd;
+
+export import fast_math.types;
+
+export {
 /**
  * @file trig_simd.h
  * @brief Hand-written SIMD trigonometric functions (DirectXMath style)
@@ -10,16 +33,10 @@
  * - DirectXMath 11/10-degree minimax polynomials
  */
 
-#pragma once
 
-#include "types.h"
-#include <cmath>
-#include <cstring>
 
 #if defined(__AVX2__) && defined(__FMA__)
-#include <immintrin.h>
 #elif defined(__SSE4_1__)
-#include <smmintrin.h>
 #endif
 
 namespace MMath {
@@ -293,3 +310,4 @@ MMATH_FORCE_INLINE void sincosScalar(Angle angle_, SinCos* MMATH_RESTRICT result
 }
 
 } // namespace MMath
+}

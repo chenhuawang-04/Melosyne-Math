@@ -8,10 +8,12 @@ project(fast_math VERSION 2.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 
 option(FAST_MATH_ENABLE_AGGRESSIVE_FLAGS "Enable high-performance compiler flags" ON)
 option(FAST_MATH_BUILD_TESTS "Build comprehensive test framework" ON)
 option(FAST_MATH_BUILD_BENCHMARKS "Build comprehensive benchmark framework" ON)
+option(FAST_MATH_BUILD_MODULES "Build C++20 module interface target" ON)
 
 set(FAST_MATH_DIRECTXMATH_DIR "E:/Project/MelosyneTest/Math/DirectXMath-apr2025" CACHE PATH "Path to DirectXMath root")
 set(FAST_MATH_EIGEN_DIR "E:/Project/MelosyneTest/Math/eigen-3.4.0" CACHE PATH "Path to Eigen root")
@@ -55,6 +57,42 @@ if(FAST_MATH_ENABLE_AGGRESSIVE_FLAGS)
             -ftree-vectorize
             -fomit-frame-pointer
         )
+    endif()
+endif()
+
+# =============================================================================
+# C++20 modules target
+# =============================================================================
+
+if(FAST_MATH_BUILD_MODULES)
+    file(GLOB FAST_MATH_MODULE_SOURCES CONFIGURE_DEPENDS
+        "modules/fast_math/*.cppm"
+    )
+
+    if(FAST_MATH_MODULE_SOURCES)
+        add_library(fast_math_modules)
+        target_sources(fast_math_modules
+            PUBLIC
+                FILE_SET CXX_MODULES
+                FILES ${FAST_MATH_MODULE_SOURCES}
+        )
+        target_link_libraries(fast_math_modules PUBLIC fast_math)
+        target_include_directories(fast_math_modules PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:include>
+        )
+        target_compile_features(fast_math_modules PUBLIC cxx_std_20)
+        target_compile_definitions(fast_math_modules PUBLIC NOMINMAX)
+
+        if(MSVC)
+            target_compile_options(fast_math_modules PRIVATE /W4 /EHsc /permissive-)
+        else()
+            target_compile_options(fast_math_modules PRIVATE -Wall -Wextra -Wpedantic)
+        endif()
+
+        message(STATUS "Enabled target: fast_math_modules")
+    else()
+        message(WARNING "No module interface files found under modules/fast_math/")
     endif()
 endif()
 
@@ -122,6 +160,7 @@ if(FAST_MATH_BUILD_TESTS)
     file(GLOB_RECURSE FAST_MATH_TEST_SOURCES CONFIGURE_DEPENDS
         "test/*.cpp"
     )
+    list(FILTER FAST_MATH_TEST_SOURCES EXCLUDE REGEX "[/\\\\]module_smoke\\.cpp$")
 
     if(FAST_MATH_TEST_SOURCES)
         add_executable(fast_math_tests ${FAST_MATH_TEST_SOURCES})
@@ -140,6 +179,20 @@ if(FAST_MATH_BUILD_TESTS)
         message(STATUS "Enabled target: fast_math_tests")
     else()
         message(WARNING "No test sources found under test/")
+    endif()
+
+    if(FAST_MATH_BUILD_MODULES AND TARGET fast_math_modules)
+        add_executable(fast_math_modules_smoke test/module_smoke.cpp)
+        target_link_libraries(fast_math_modules_smoke PRIVATE fast_math_modules)
+
+        if(MSVC)
+            target_compile_options(fast_math_modules_smoke PRIVATE /W4 /EHsc /permissive-)
+        else()
+            target_compile_options(fast_math_modules_smoke PRIVATE -Wall -Wextra -Wpedantic)
+        endif()
+
+        add_test(NAME fast_math_modules_smoke COMMAND fast_math_modules_smoke)
+        message(STATUS "Enabled target: fast_math_modules_smoke")
     endif()
 endif()
 
@@ -168,6 +221,12 @@ endif()
 
 install(DIRECTORY include/ DESTINATION include)
 install(TARGETS fast_math EXPORT fast_mathTargets)
+if(TARGET fast_math_modules)
+    install(TARGETS fast_math_modules
+        EXPORT fast_mathTargets
+        FILE_SET CXX_MODULES DESTINATION share/fast_math/modules
+    )
+endif()
 install(EXPORT fast_mathTargets
     FILE fast_mathTargets.cmake
     NAMESPACE fast_math::

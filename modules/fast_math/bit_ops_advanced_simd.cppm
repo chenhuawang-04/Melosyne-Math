@@ -1,3 +1,25 @@
+module;
+
+#include "fast_math/config_macros.h"
+#include <cstdint>
+#include <cstddef>
+#include <cstring>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+#include <bit>
+#include <iterator>
+#include <type_traits>
+#include <memory>
+#include <memory_resource>
+#include <cfloat>
+#include <immintrin.h>
+
+export module fast_math.bit_ops_advanced_simd;
+
+export import fast_math.bit_ops_advanced;
+
+export {
 /**
  * @file bit_ops_advanced_simd.h
  * @brief SIMD-optimized advanced bit manipulation (limited optimizations)
@@ -31,16 +53,9 @@
  * - SWAR Magic: https://aggregate.org/MAGIC/
  */
 
-#pragma once
 
-#include "config_macros.h"
-#include "bit_ops_advanced.h"
-#include <cstdint>
-#include <cstring>
-#include <algorithm>
 
 #if defined(__AVX2__)
-#include <immintrin.h>
 #endif
 
 namespace Melosyne {
@@ -332,3 +347,4 @@ inline void rotateRightOptimized(BitSetView view, std::size_t shift) noexcept {
 
 } // namespace BitOps
 } // namespace Melosyne
+}

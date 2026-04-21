@@ -1,3 +1,22 @@
+module;
+
+#include "fast_math/config_macros.h"
+#include <cstdint>
+#include <cstddef>
+#include <cstring>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+#include <bit>
+#include <iterator>
+#include <type_traits>
+#include <memory>
+#include <memory_resource>
+#include <cfloat>
+
+export module fast_math.bitset_static;
+
+export {
 /**
  * @file bitset_static.h
  * @brief Compile-time fixed-size bitset (STRICT POD, NO member functions)
@@ -22,12 +41,8 @@
  * @endcode
  */
 
-#pragma once
 
-#include "config_macros.h"
 
-#include <cstdint>
-#include <type_traits>
 
 namespace Melosyne {
 
@@ -75,3 +90,4 @@ static_assert(std::is_standard_layout_v<BitSet<512>>,  "BitSet<512> must be stan
 static_assert(std::is_standard_layout_v<BitSet<1024>>, "BitSet<1024> must be standard layout");
 
 } // namespace Melosyne
+}

@@ -1,3 +1,26 @@
+module;
+
+#include "fast_math/config_macros.h"
+#include <cstdint>
+#include <cstddef>
+#include <cstring>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+#include <bit>
+#include <iterator>
+#include <type_traits>
+#include <memory>
+#include <memory_resource>
+#include <cfloat>
+#include <immintrin.h>
+
+export module fast_math.bit_ops_range_simd;
+
+export import fast_math.bit_ops_range;
+export import fast_math.bit_ops_count_simd;
+
+export {
 /**
  * @file bit_ops_range_simd.h
  * @brief SIMD-optimized bit range operations (AVX2)
@@ -29,16 +52,9 @@
  * - Bit Twiddling Hacks: https://graphics.stanford.edu/~seander/bithacks.html
  */
 
-#pragma once
 
-#include "config_macros.h"
-#include "bit_ops_range.h"
-#include "bit_ops_count_simd.h"  // For popcount256
-#include <cstdint>
-#include <algorithm>
 
 #if defined(__AVX2__)
-#include <immintrin.h>
 #endif
 
 namespace Melosyne {
@@ -441,3 +457,4 @@ BITOPS_FORCEINLINE void flipRangeOptimized(
 
 } // namespace BitOps
 } // namespace Melosyne
+}

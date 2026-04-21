@@ -1,5 +1,6 @@
-﻿# Build directories
+# Build directories
 /build/
+/build_modules/
 
 # CMake / Visual Studio generated files
 CMakeFiles/
