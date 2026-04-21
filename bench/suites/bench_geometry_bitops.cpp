@@ -101,8 +101,7 @@ FM_BENCH(Geometry, Aabb2ContainsMerge) {
                  double acc = 0.0;
                  MMath::Aabb2 merged = boxes[0];
                  for (int i = 0; i < N; ++i) {
-                     acc += MMath::aabb2ContainsPoint(boxes[i], pts[i]) ? 1.0 : 0.0;
-                     merged = MMath::aabb2Merge(merged, boxes[i]);
+                     acc += MMath::aabb2ContainsPointAndMergeInPlace(merged, boxes[i], pts[i]) ? 1.0 : 0.0;
                  }
                  acc += MMath::aabb2Area(merged);
                  fmbench::consume(acc);
@@ -281,7 +280,7 @@ FM_BENCH(Geometry, Aabb2MergeOnly) {
             {"fast_math", true, [&]() {
                  MMath::Aabb2 merged = boxes[0];
                  for (int i = 1; i < N; ++i) {
-                     merged = MMath::aabb2Merge(merged, boxes[i]);
+                     MMath::aabb2MergeInPlace(merged, boxes[i]);
                  }
                  const double area = static_cast<double>(MMath::aabb2Area(merged));
                  fmbench::consume(area);

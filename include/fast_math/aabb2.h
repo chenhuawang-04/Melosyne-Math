@@ -186,15 +186,13 @@ MMATH_FORCE_INLINE float aabb2Perimeter(Aabb2 aabb_) noexcept {
  * @brief Test if AABB contains a point
  */
 MMATH_FORCE_INLINE bool aabb2ContainsPoint(const Aabb2& aabb_, Vec2 point_) noexcept {
-#if defined(__SSE4_1__)
-    __m128 v_aabb = _mm_loadu_ps(&aabb_.minx);  // [minx, miny, neg_maxx, neg_maxy]
-    __m128 v_point = _mm_setr_ps(point_.x, point_.y, -point_.x, -point_.y);
-    __m128 cmp = _mm_cmple_ps(v_aabb, v_point);  // aabb <= point
-    return _mm_test_all_ones(_mm_castps_si128(cmp));
-#else
-    return point_.x >= aabb_.minx && point_.x <= -aabb_.neg_maxx &&
-           point_.y >= aabb_.miny && point_.y <= -aabb_.neg_maxy;
-#endif
+    // Branchless scalar path reduces register pressure in mixed kernels
+    // (contains + merge), while remaining competitive in contains-only loops.
+    const bool c0 = point_.x >= aabb_.minx;
+    const bool c1 = point_.x <= -aabb_.neg_maxx;
+    const bool c2 = point_.y >= aabb_.miny;
+    const bool c3 = point_.y <= -aabb_.neg_maxy;
+    return c0 & c1 & c2 & c3;
 }
 
 /**
@@ -258,18 +256,38 @@ MMATH_FORCE_INLINE float aabb2OverlapArea(const Aabb2& a_, const Aabb2& b_) noex
 // ============================================================================
 
 /**
- * @brief Merge (Union) two AABBs - Single SSE instruction
- *
- * Reference: https://mtsamis.com/blog/23_11_07_aabbs
- * Thanks to negative max storage, this is just min(a, b)
+ * @brief In-place merge (union): dst = union(dst, src)
+ */
+MMATH_FORCE_INLINE void aabb2MergeInPlace(Aabb2& dst_, const Aabb2& src_) noexcept {
+    dst_.minx = std::min(dst_.minx, src_.minx);
+    dst_.miny = std::min(dst_.miny, src_.miny);
+    dst_.neg_maxx = std::min(dst_.neg_maxx, src_.neg_maxx);
+    dst_.neg_maxy = std::min(dst_.neg_maxy, src_.neg_maxy);
+}
+
+/**
+ * @brief Merge (Union) two AABBs
  */
 MMATH_FORCE_INLINE Aabb2 aabb2Merge(const Aabb2& a_, const Aabb2& b_) noexcept {
-    return Aabb2{
-        std::min(a_.minx, b_.minx),
-        std::min(a_.miny, b_.miny),
-        std::min(a_.neg_maxx, b_.neg_maxx),
-        std::min(a_.neg_maxy, b_.neg_maxy)
-    };
+    Aabb2 out = a_;
+    aabb2MergeInPlace(out, b_);
+    return out;
+}
+
+/**
+ * @brief Fused contains + merge helper for tight broad-phase loops
+ */
+MMATH_FORCE_INLINE bool aabb2ContainsPointAndMergeInPlace(
+    Aabb2& merged_,
+    const Aabb2& box_,
+    Vec2 point_) noexcept {
+    const bool c0 = point_.x >= box_.minx;
+    const bool c1 = point_.x <= -box_.neg_maxx;
+    const bool c2 = point_.y >= box_.miny;
+    const bool c3 = point_.y <= -box_.neg_maxy;
+    const bool inside = c0 & c1 & c2 & c3;
+    aabb2MergeInPlace(merged_, box_);
+    return inside;
 }
 
 /**

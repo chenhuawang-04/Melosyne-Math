@@ -64,6 +64,16 @@ FM_TEST(Aabb2, RandomizedContainmentAndMerge) {
         FM_REQUIRE(MMath::aabb2Contains(uni, box));
         FM_REQUIRE(MMath::aabb2Contains(uni, box2));
 
+        MMath::Aabb2 uni_inplace = box;
+        MMath::aabb2MergeInPlace(uni_inplace, box2);
+        FM_REQUIRE(MMath::aabb2Equal(uni, uni_inplace));
+
+        MMath::Aabb2 fused_merged = box;
+        const bool fused_inside = MMath::aabb2ContainsPointAndMergeInPlace(fused_merged, box2, p);
+        const bool separate_inside = MMath::aabb2ContainsPoint(box2, p);
+        FM_REQUIRE(fused_inside == separate_inside);
+        FM_REQUIRE(MMath::aabb2Equal(fused_merged, MMath::aabb2Merge(box, box2)));
+
         MMath::Aabb2 inter = MMath::aabb2Intersect(box, box2);
         if (MMath::aabb2Intersects(box, box2)) {
             FM_REQUIRE(MMath::aabb2IsValid(inter));
