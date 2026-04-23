@@ -2,6 +2,7 @@
 
 #include "fast_math/bit_ops.h"
 
+#include <bitset>
 #include <cstdint>
 #include <random>
 #include <vector>
@@ -30,6 +31,17 @@ std::vector<std::size_t> make_indices(std::size_t count, std::size_t limit, uint
         v = dist(rng);
     }
     return out;
+}
+
+template <std::size_t N>
+void seed_pattern_std(std::bitset<N>& bs, uint32_t seed) {
+    uint32_t x = seed;
+    for (std::size_t i = 0; i < N; ++i) {
+        x = x * 1664525u + 1013904223u;
+        if ((x >> 31) & 1u) {
+            bs.set(i);
+        }
+    }
 }
 
 } // namespace
@@ -227,6 +239,126 @@ FM_BENCH(BitOps, DynamicAndPopcountLarge_64K) {
 #else
             {"optimized", false, {}},
 #endif
+        },
+        options.config);
+}
+
+FM_BENCH(StdBitsetCmp, DynamicVsStdBitset_AndCount_4K) {
+    constexpr std::size_t N = 4096;
+    constexpr int ROUNDS = 3072;
+
+    DynamicBitSet a_dyn(N), b_dyn(N);
+    for (std::size_t i = 0; i < N; i += 3) set(a_dyn, i);
+    for (std::size_t i = 0; i < N; i += 5) set(b_dyn, i);
+
+    std::bitset<N> a_std, b_std;
+    seed_pattern_std(a_std, 0x10293847u);
+    seed_pattern_std(b_std, 0x55667788u);
+
+    fmbench::run_comparison_case(
+        "dynamic vs std::bitset and+count (4K bits)",
+        static_cast<std::size_t>(ROUNDS * 2),
+        {
+            {"dynamic_bitset", true, [&]() {
+                 double acc = 0.0;
+                 DynamicBitSet x = a_dyn;
+                 for (int r = 0; r < ROUNDS; ++r) {
+                     bitwiseAndOptimized(x, b_dyn);
+                     acc += static_cast<double>(popcountOptimized(x));
+                     flipRange(x, static_cast<std::size_t>((r * 13) & (N - 1)),
+                               static_cast<std::size_t>(((r * 13) & (N - 1)) + 9));
+                 }
+                 fmbench::consume(acc);
+             }},
+            {"std::bitset", true, [&]() {
+                 double acc = 0.0;
+                 std::bitset<N> x = a_std;
+                 for (int r = 0; r < ROUNDS; ++r) {
+                     x &= b_std;
+                     acc += static_cast<double>(x.count());
+
+                     const std::size_t base = static_cast<std::size_t>((r * 13) & (N - 1));
+                     for (std::size_t k = 0; k < 9; ++k) {
+                         x.flip((base + k) & (N - 1));
+                     }
+                 }
+                 fmbench::consume(acc);
+             }},
+        },
+        options.config);
+}
+
+FM_BENCH(StdBitsetCmp, DynamicVsStdBitset_AndCount_64K) {
+    constexpr std::size_t N = 65536;
+    constexpr int ROUNDS = 512;
+
+    DynamicBitSet a_dyn(N), b_dyn(N);
+    seed_pattern(a_dyn, N, 0xA1B2C3D4u);
+    seed_pattern(b_dyn, N, 0x0F1E2D3Cu);
+
+    std::bitset<N> a_std, b_std;
+    seed_pattern_std(a_std, 0xA1B2C3D4u);
+    seed_pattern_std(b_std, 0x0F1E2D3Cu);
+
+    fmbench::run_comparison_case(
+        "dynamic vs std::bitset and+count (64K bits)",
+        static_cast<std::size_t>(ROUNDS * 2),
+        {
+            {"dynamic_bitset", true, [&]() {
+                 double acc = 0.0;
+                 DynamicBitSet x = a_dyn;
+                 for (int r = 0; r < ROUNDS; ++r) {
+                     bitwiseAndOptimized(x, b_dyn);
+                     acc += static_cast<double>(popcountOptimized(x));
+                     flipAll(x);
+                 }
+                 fmbench::consume(acc);
+             }},
+            {"std::bitset", true, [&]() {
+                 double acc = 0.0;
+                 std::bitset<N> x = a_std;
+                 for (int r = 0; r < ROUNDS; ++r) {
+                     x &= b_std;
+                     acc += static_cast<double>(x.count());
+                     x.flip();
+                 }
+                 fmbench::consume(acc);
+             }},
+        },
+        options.config);
+}
+
+FM_BENCH(StdBitsetCmp, DynamicVsStdBitset_RandomBitAccess_16K) {
+    constexpr std::size_t N = 16384;
+    constexpr int ROUNDS = 256;
+    constexpr std::size_t INDICES = 4096;
+
+    const auto idx = make_indices(INDICES, N, 0xD00DFEEDu);
+    DynamicBitSet dyn(N);
+    std::bitset<N> st;
+
+    fmbench::run_comparison_case(
+        "dynamic vs std::bitset random set/test/reset (16K bits)",
+        static_cast<std::size_t>(ROUNDS * INDICES * 3),
+        {
+            {"dynamic_bitset", true, [&]() {
+                 double acc = 0.0;
+                 for (int r = 0; r < ROUNDS; ++r) {
+                     for (std::size_t p : idx) set(dyn, p);
+                     for (std::size_t p : idx) acc += test(dyn, p) ? 1.0 : 0.0;
+                     for (std::size_t p : idx) reset(dyn, p);
+                 }
+                 fmbench::consume(acc);
+             }},
+            {"std::bitset", true, [&]() {
+                 double acc = 0.0;
+                 for (int r = 0; r < ROUNDS; ++r) {
+                     for (std::size_t p : idx) st.set(p);
+                     for (std::size_t p : idx) acc += st.test(p) ? 1.0 : 0.0;
+                     for (std::size_t p : idx) st.reset(p);
+                 }
+                 fmbench::consume(acc);
+             }},
         },
         options.config);
 }
