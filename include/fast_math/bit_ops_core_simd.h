@@ -1,22 +1,6 @@
 /**
  * @file bit_ops_core_simd.h
- * @brief SIMD-optimized bitwise operations (AVX2/SSE4.1)
- *
- * Design Philosophy:
- * - AVX2/SSE4.1 intrinsics for batch processing
- * - Adaptive strategy: Scalar for small, SIMD for large
- * - In `detail` namespace (internal implementation)
- * - Public API automatically dispatches to SIMD when beneficial
- *
- * Performance:
- * - AVX2: Process 256 bits (4 words) per iteration
- * - ~2-4x faster than scalar for large bitsets (> 512 bits)
- * - Aligned memory access (bitsets are alignas(32))
- *
- * Architecture:
- * - AVX2 path: >= 9 words (> 512 bits)
- * - Scalar path: < 9 words (<= 512 bits)
- * - Compiler auto-vectorization handles scalar
+ * @brief SIMD-optimized core bitwise operations (AVX2)
  */
 
 #pragma once
@@ -24,9 +8,9 @@
 #include "config_macros.h"
 #include "bitset_view.h"
 #include "bit_ops_core.h"
-#include <cstdint>
-#include <cstring>
+
 #include <algorithm>
+#include <cstdint>
 
 #if defined(__AVX2__)
 #include <immintrin.h>
@@ -38,51 +22,61 @@ namespace detail {
 
 #if defined(__AVX2__)
 
-/**
- * @brief Bitwise AND with AVX2 optimization
- * @param dst Destination bitset
- * @param src Source bitset
- * @note AVX2: Processes 4 words (256 bits) per iteration
- */
+static constexpr std::size_t kAvx2Words = 4;  // 4 x 64-bit words = 256 bits
+static constexpr std::size_t kAvx2Bytes = 32;
+
+BITOPS_FORCEINLINE bool isAligned32(const void* ptr_) noexcept {
+    return (reinterpret_cast<std::uintptr_t>(ptr_) & (kAvx2Bytes - 1)) == 0;
+}
+
 inline void bitwiseAndSimd(BitSetView dst, ConstBitSetView src) noexcept {
-    std::size_t min_words = std::min(dst.word_count, src.word_count);
+    const std::size_t min_words = std::min(dst.word_count, src.word_count);
+    const std::size_t simd_words = min_words & ~(kAvx2Words - 1);
 
-    // AVX2 path
     std::size_t i = 0;
-    const std::size_t avx2_words = min_words & ~std::size_t{3};
+    const bool aligned = isAligned32(dst.data) && isAligned32(src.data);
 
-    for (; i < avx2_words; i += 4) {
-        __m256i a = _mm256_load_si256(reinterpret_cast<const __m256i*>(dst.data + i));
-        __m256i b = _mm256_load_si256(reinterpret_cast<const __m256i*>(src.data + i));
-        __m256i result = _mm256_and_si256(a, b);
-        _mm256_store_si256(reinterpret_cast<__m256i*>(dst.data + i), result);
+    if (aligned) {
+        for (; i < simd_words; i += kAvx2Words) {
+            const __m256i a = _mm256_load_si256(reinterpret_cast<const __m256i*>(dst.data + i));
+            const __m256i b = _mm256_load_si256(reinterpret_cast<const __m256i*>(src.data + i));
+            _mm256_store_si256(reinterpret_cast<__m256i*>(dst.data + i), _mm256_and_si256(a, b));
+        }
+    } else {
+        for (; i < simd_words; i += kAvx2Words) {
+            const __m256i a = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(dst.data + i));
+            const __m256i b = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(src.data + i));
+            _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst.data + i), _mm256_and_si256(a, b));
+        }
     }
 
-    // Scalar remainder
     for (; i < min_words; ++i) {
         dst.data[i] &= src.data[i];
     }
-
-    // Clear beyond src length
     for (; i < dst.word_count; ++i) {
         dst.data[i] = 0;
     }
 }
 
-/**
- * @brief Bitwise OR with AVX2 optimization
- */
 inline void bitwiseOrSimd(BitSetView dst, ConstBitSetView src) noexcept {
-    std::size_t min_words = std::min(dst.word_count, src.word_count);
+    const std::size_t min_words = std::min(dst.word_count, src.word_count);
+    const std::size_t simd_words = min_words & ~(kAvx2Words - 1);
 
     std::size_t i = 0;
-    const std::size_t avx2_words = min_words & ~std::size_t{3};
+    const bool aligned = isAligned32(dst.data) && isAligned32(src.data);
 
-    for (; i < avx2_words; i += 4) {
-        __m256i a = _mm256_load_si256(reinterpret_cast<const __m256i*>(dst.data + i));
-        __m256i b = _mm256_load_si256(reinterpret_cast<const __m256i*>(src.data + i));
-        __m256i result = _mm256_or_si256(a, b);
-        _mm256_store_si256(reinterpret_cast<__m256i*>(dst.data + i), result);
+    if (aligned) {
+        for (; i < simd_words; i += kAvx2Words) {
+            const __m256i a = _mm256_load_si256(reinterpret_cast<const __m256i*>(dst.data + i));
+            const __m256i b = _mm256_load_si256(reinterpret_cast<const __m256i*>(src.data + i));
+            _mm256_store_si256(reinterpret_cast<__m256i*>(dst.data + i), _mm256_or_si256(a, b));
+        }
+    } else {
+        for (; i < simd_words; i += kAvx2Words) {
+            const __m256i a = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(dst.data + i));
+            const __m256i b = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(src.data + i));
+            _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst.data + i), _mm256_or_si256(a, b));
+        }
     }
 
     for (; i < min_words; ++i) {
@@ -90,20 +84,25 @@ inline void bitwiseOrSimd(BitSetView dst, ConstBitSetView src) noexcept {
     }
 }
 
-/**
- * @brief Bitwise XOR with AVX2 optimization
- */
 inline void bitwiseXorSimd(BitSetView dst, ConstBitSetView src) noexcept {
-    std::size_t min_words = std::min(dst.word_count, src.word_count);
+    const std::size_t min_words = std::min(dst.word_count, src.word_count);
+    const std::size_t simd_words = min_words & ~(kAvx2Words - 1);
 
     std::size_t i = 0;
-    const std::size_t avx2_words = min_words & ~std::size_t{3};
+    const bool aligned = isAligned32(dst.data) && isAligned32(src.data);
 
-    for (; i < avx2_words; i += 4) {
-        __m256i a = _mm256_load_si256(reinterpret_cast<const __m256i*>(dst.data + i));
-        __m256i b = _mm256_load_si256(reinterpret_cast<const __m256i*>(src.data + i));
-        __m256i result = _mm256_xor_si256(a, b);
-        _mm256_store_si256(reinterpret_cast<__m256i*>(dst.data + i), result);
+    if (aligned) {
+        for (; i < simd_words; i += kAvx2Words) {
+            const __m256i a = _mm256_load_si256(reinterpret_cast<const __m256i*>(dst.data + i));
+            const __m256i b = _mm256_load_si256(reinterpret_cast<const __m256i*>(src.data + i));
+            _mm256_store_si256(reinterpret_cast<__m256i*>(dst.data + i), _mm256_xor_si256(a, b));
+        }
+    } else {
+        for (; i < simd_words; i += kAvx2Words) {
+            const __m256i a = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(dst.data + i));
+            const __m256i b = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(src.data + i));
+            _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst.data + i), _mm256_xor_si256(a, b));
+        }
     }
 
     for (; i < min_words; ++i) {
@@ -111,47 +110,59 @@ inline void bitwiseXorSimd(BitSetView dst, ConstBitSetView src) noexcept {
     }
 }
 
-/**
- * @brief Copy with AVX2 optimization
- */
 inline void copySimd(BitSetView dst, ConstBitSetView src) noexcept {
-    std::size_t min_words = std::min(dst.word_count, src.word_count);
+    const std::size_t min_words = std::min(dst.word_count, src.word_count);
+    const std::size_t simd_words = min_words & ~(kAvx2Words - 1);
 
     std::size_t i = 0;
-    const std::size_t avx2_words = min_words & ~std::size_t{3};
+    const bool aligned = isAligned32(dst.data) && isAligned32(src.data);
 
-    for (; i < avx2_words; i += 4) {
-        __m256i data = _mm256_load_si256(reinterpret_cast<const __m256i*>(src.data + i));
-        _mm256_store_si256(reinterpret_cast<__m256i*>(dst.data + i), data);
+    if (aligned) {
+        for (; i < simd_words; i += kAvx2Words) {
+            const __m256i v = _mm256_load_si256(reinterpret_cast<const __m256i*>(src.data + i));
+            _mm256_store_si256(reinterpret_cast<__m256i*>(dst.data + i), v);
+        }
+    } else {
+        for (; i < simd_words; i += kAvx2Words) {
+            const __m256i v = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(src.data + i));
+            _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst.data + i), v);
+        }
     }
 
     for (; i < min_words; ++i) {
         dst.data[i] = src.data[i];
     }
-
     for (; i < dst.word_count; ++i) {
         dst.data[i] = 0;
     }
 }
 
-/**
- * @brief Equality test with AVX2 optimization
- */
 [[nodiscard]] inline bool equalSimd(ConstBitSetView a, ConstBitSetView b) noexcept {
     if (a.bit_count != b.bit_count) {
         return false;
     }
 
+    const std::size_t simd_words = a.word_count & ~(kAvx2Words - 1);
     std::size_t i = 0;
-    const std::size_t avx2_words = a.word_count & ~std::size_t{3};
+    const bool aligned = isAligned32(a.data) && isAligned32(b.data);
 
-    for (; i < avx2_words; i += 4) {
-        __m256i av = _mm256_load_si256(reinterpret_cast<const __m256i*>(a.data + i));
-        __m256i bv = _mm256_load_si256(reinterpret_cast<const __m256i*>(b.data + i));
-        __m256i cmp = _mm256_cmpeq_epi64(av, bv);
-
-        if (_mm256_movemask_epi8(cmp) != -1) {
-            return false;
+    if (aligned) {
+        for (; i < simd_words; i += kAvx2Words) {
+            const __m256i av = _mm256_load_si256(reinterpret_cast<const __m256i*>(a.data + i));
+            const __m256i bv = _mm256_load_si256(reinterpret_cast<const __m256i*>(b.data + i));
+            const __m256i cmp = _mm256_cmpeq_epi64(av, bv);
+            if (_mm256_movemask_epi8(cmp) != -1) {
+                return false;
+            }
+        }
+    } else {
+        for (; i < simd_words; i += kAvx2Words) {
+            const __m256i av = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(a.data + i));
+            const __m256i bv = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(b.data + i));
+            const __m256i cmp = _mm256_cmpeq_epi64(av, bv);
+            if (_mm256_movemask_epi8(cmp) != -1) {
+                return false;
+            }
         }
     }
 
@@ -160,7 +171,6 @@ inline void copySimd(BitSetView dst, ConstBitSetView src) noexcept {
             return false;
         }
     }
-
     return true;
 }
 
@@ -169,49 +179,119 @@ inline void copySimd(BitSetView dst, ConstBitSetView src) noexcept {
 } // namespace detail
 
 // ============================================================================
-// Public API with automatic dispatch (using compiler hints for vectorization)
+// Public optimized API
 // ============================================================================
 
-/**
- * @brief Bitwise AND with compiler-guided vectorization
- * @param dst Destination bitset (modified in-place)
- * @param src Source bitset (read-only)
- * @note Uses compiler hints to ensure vectorization (faster than manual AVX2)
- */
 BITOPS_FORCEINLINE void bitwiseAndOptimized(BitSetView dst, ConstBitSetView src) noexcept {
 #if defined(__AVX2__)
-    // Practical dispatch:
-    // - Small/medium bitsets are faster on scalar POPCNT + compiler auto-vectorization.
-    // - Large aligned bitsets benefit from explicit AVX2 path.
-    if (dst.word_count >= 256 && src.word_count >= 256) {
-        const auto dst_addr = reinterpret_cast<std::uintptr_t>(dst.data);
-        const auto src_addr = reinterpret_cast<std::uintptr_t>(src.data);
-        if ((dst_addr % 32u) == 0u && (src_addr % 32u) == 0u) {
-            detail::bitwiseAndSimd(dst, src);
-            return;
-        }
+    if (std::min(dst.word_count, src.word_count) >= 256) {
+        detail::bitwiseAndSimd(dst, src);
+        return;
     }
 #endif
-
-    // Default path: let scalar implementation and compiler do the right thing.
     bitwiseAnd(dst, src);
 }
 
+BITOPS_FORCEINLINE void bitwiseOrOptimized(BitSetView dst, ConstBitSetView src) noexcept {
+#if defined(__AVX2__)
+    if (std::min(dst.word_count, src.word_count) >= 256) {
+        detail::bitwiseOrSimd(dst, src);
+        return;
+    }
+#endif
+    bitwiseOr(dst, src);
+}
+
+BITOPS_FORCEINLINE void bitwiseXorOptimized(BitSetView dst, ConstBitSetView src) noexcept {
+#if defined(__AVX2__)
+    if (std::min(dst.word_count, src.word_count) >= 256) {
+        detail::bitwiseXorSimd(dst, src);
+        return;
+    }
+#endif
+    bitwiseXor(dst, src);
+}
+
+BITOPS_FORCEINLINE void copyOptimized(BitSetView dst, ConstBitSetView src) noexcept {
+#if defined(__AVX2__)
+    if (std::min(dst.word_count, src.word_count) >= 256) {
+        detail::copySimd(dst, src);
+        return;
+    }
+#endif
+    copy(dst, src);
+}
+
+[[nodiscard]] BITOPS_FORCEINLINE bool equalOptimized(ConstBitSetView a, ConstBitSetView b) noexcept {
+#if defined(__AVX2__)
+    if (a.word_count >= 256) {
+        return detail::equalSimd(a, b);
+    }
+#endif
+    return equal(a, b);
+}
+
 template<std::size_t DstBits, std::size_t SrcBits>
-BITOPS_FORCEINLINE void bitwiseAndOptimized(
-    BitSet<DstBits>& dst,
-    const BitSet<SrcBits>& src) noexcept {
+BITOPS_FORCEINLINE void bitwiseAndOptimized(BitSet<DstBits>& dst, const BitSet<SrcBits>& src) noexcept {
 #if defined(__AVX2__)
     constexpr std::size_t kDstWords = (DstBits + 63) / 64;
     constexpr std::size_t kSrcWords = (SrcBits + 63) / 64;
-
-    if constexpr (kDstWords >= 256 && kSrcWords >= 256) {
-        // BitSet<> is alignas(32), so AVX2 aligned loads/stores are valid.
+    if constexpr (std::min(kDstWords, kSrcWords) >= 256) {
         detail::bitwiseAndSimd(BitSetView(dst), ConstBitSetView(src));
         return;
     }
 #endif
     bitwiseAnd(BitSetView(dst), ConstBitSetView(src));
+}
+
+template<std::size_t DstBits, std::size_t SrcBits>
+BITOPS_FORCEINLINE void bitwiseOrOptimized(BitSet<DstBits>& dst, const BitSet<SrcBits>& src) noexcept {
+#if defined(__AVX2__)
+    constexpr std::size_t kDstWords = (DstBits + 63) / 64;
+    constexpr std::size_t kSrcWords = (SrcBits + 63) / 64;
+    if constexpr (std::min(kDstWords, kSrcWords) >= 256) {
+        detail::bitwiseOrSimd(BitSetView(dst), ConstBitSetView(src));
+        return;
+    }
+#endif
+    bitwiseOr(BitSetView(dst), ConstBitSetView(src));
+}
+
+template<std::size_t DstBits, std::size_t SrcBits>
+BITOPS_FORCEINLINE void bitwiseXorOptimized(BitSet<DstBits>& dst, const BitSet<SrcBits>& src) noexcept {
+#if defined(__AVX2__)
+    constexpr std::size_t kDstWords = (DstBits + 63) / 64;
+    constexpr std::size_t kSrcWords = (SrcBits + 63) / 64;
+    if constexpr (std::min(kDstWords, kSrcWords) >= 256) {
+        detail::bitwiseXorSimd(BitSetView(dst), ConstBitSetView(src));
+        return;
+    }
+#endif
+    bitwiseXor(BitSetView(dst), ConstBitSetView(src));
+}
+
+template<std::size_t DstBits, std::size_t SrcBits>
+BITOPS_FORCEINLINE void copyOptimized(BitSet<DstBits>& dst, const BitSet<SrcBits>& src) noexcept {
+#if defined(__AVX2__)
+    constexpr std::size_t kDstWords = (DstBits + 63) / 64;
+    constexpr std::size_t kSrcWords = (SrcBits + 63) / 64;
+    if constexpr (std::min(kDstWords, kSrcWords) >= 256) {
+        detail::copySimd(BitSetView(dst), ConstBitSetView(src));
+        return;
+    }
+#endif
+    copy(BitSetView(dst), ConstBitSetView(src));
+}
+
+template<std::size_t ABits, std::size_t BBits>
+[[nodiscard]] BITOPS_FORCEINLINE bool equalOptimized(const BitSet<ABits>& a, const BitSet<BBits>& b) noexcept {
+#if defined(__AVX2__)
+    constexpr std::size_t kAWords = (ABits + 63) / 64;
+    if constexpr (ABits == BBits && kAWords >= 256) {
+        return detail::equalSimd(ConstBitSetView(a), ConstBitSetView(b));
+    }
+#endif
+    return equal(ConstBitSetView(a), ConstBitSetView(b));
 }
 
 } // namespace BitOps

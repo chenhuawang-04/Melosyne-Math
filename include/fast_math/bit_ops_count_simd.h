@@ -131,15 +131,6 @@ inline uint64_t popcount256(__m256i v) noexcept {
  * - < 512 bytes: Scalar ~1.0x (simple is fast)
  */
 inline std::size_t popcountSimd(ConstBitSetView view) noexcept {
-    // For very large bitsets, std::popcount loop is fastest
-    if (view.word_count > 512) {
-        std::size_t total = 0;
-        for (std::size_t i = 0; i < view.word_count; ++i) {
-            total += std::popcount(view.data[i]);
-        }
-        return total;
-    }
-
     std::size_t total = 0;
     std::size_t i = 0;
     const std::size_t avx2_words = view.word_count & ~std::size_t{3};
@@ -230,10 +221,19 @@ inline bool allSimd(ConstBitSetView view) noexcept {
     const std::size_t avx2_words = complete_words & ~std::size_t{3};
     const __m256i ones = _mm256_set1_epi64x(-1);
 
-    for (; i < avx2_words; i += 4) {
-        __m256i v = _mm256_load_si256(reinterpret_cast<const __m256i*>(view.data + i));
-        __m256i cmp = _mm256_cmpeq_epi64(v, ones);
-        if (_mm256_movemask_epi8(cmp) != -1) return false;
+    const bool aligned = (reinterpret_cast<uintptr_t>(view.data) % 32u) == 0u;
+    if (aligned) {
+        for (; i < avx2_words; i += 4) {
+            __m256i v = _mm256_load_si256(reinterpret_cast<const __m256i*>(view.data + i));
+            __m256i cmp = _mm256_cmpeq_epi64(v, ones);
+            if (_mm256_movemask_epi8(cmp) != -1) return false;
+        }
+    } else {
+        for (; i < avx2_words; i += 4) {
+            __m256i v = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(view.data + i));
+            __m256i cmp = _mm256_cmpeq_epi64(v, ones);
+            if (_mm256_movemask_epi8(cmp) != -1) return false;
+        }
     }
 
     for (; i < complete_words; ++i) {
@@ -325,13 +325,9 @@ inline std::size_t intersectionCountSimd(
  */
 BITOPS_FORCEINLINE std::size_t popcountOptimized(ConstBitSetView view) noexcept {
 #if defined(__AVX2__)
-    // Small/medium bitsets: scalar POPCNT is typically best.
-    if (view.word_count <= 256) {
-        return popcount(view);
-    }
-
-    // Very large bitsets: use Harley-Seal SIMD algorithm.
-    if (view.word_count > 256) {
+    // On modern x86_64, scalar POPCNT is usually best until very large buffers.
+    // Keep SIMD for very large ranges to avoid regressions on medium workloads.
+    if (view.word_count >= 2048) {
         return detail::popcountSimd(view);
     }
 #endif
@@ -344,7 +340,7 @@ template<std::size_t N>
 BITOPS_FORCEINLINE std::size_t popcountOptimized(const BitSet<N>& view) noexcept {
 #if defined(__AVX2__)
     constexpr std::size_t kWords = (N + 63) / 64;
-    if constexpr (kWords > 256) {
+    if constexpr (kWords >= 2048) {
         return detail::popcountSimd(ConstBitSetView(view));
     }
 #endif
