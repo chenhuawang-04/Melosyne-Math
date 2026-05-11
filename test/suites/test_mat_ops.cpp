@@ -44,7 +44,7 @@ FM_TEST(Mat3, CoreOperationsAndInverse) {
 }
 
 FM_TEST(Mat3, BatchInterfaces) {
-    fmtest::Rng rng(0x44556677U);
+    FmTest::Rng rng(0x44556677U);
 
     constexpr int n = 64;
     MMath::Vec2 translations[n];
@@ -87,13 +87,13 @@ FM_TEST(Mat3, SingularInverseReportsFailure) {
 }
 
 FM_TEST(Mat4, CoreAlgebraAndTransforms) {
-    fmtest::Rng rng(0x76543210U);
+    FmTest::Rng rng(0x76543210U);
 
     const MMath::Mat4 id = MMath::mat4Identity();
     FM_REQUIRE_MAT4_NEAR(MMath::mat4Multiply(id, id), id, 1e-6f);
 
     for (int i = 0; i < 2000; ++i) {
-        MMath::Vec4 v = fmtest::randomVec4(rng, -5.0f, 5.0f);
+        MMath::Vec4 v = FmTest::randomVec4(rng, -5.0f, 5.0f);
         MMath::Mat4 t = MMath::mat4Translation(
             rng.uniform(-4.0f, 4.0f),
             rng.uniform(-4.0f, 4.0f),

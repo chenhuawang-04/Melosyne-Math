@@ -43,7 +43,7 @@ jobs:
       - name: clang-tidy (naming)
         shell: pwsh
         run: |
-          cmake -S . -B build_tidy -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DFAST_MATH_BUILD_TESTS=OFF -DFAST_MATH_BUILD_BENCHMARKS=OFF
+          cmake -S . -B build_tidy -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           cmake --build build_tidy -j 4
 
           # Run clang-tidy on translation units that exist in the compilation database.
@@ -51,6 +51,13 @@ jobs:
           $mods = Get-ChildItem -Path modules/fast_math -Filter *.cppm -File
           foreach ($m in $mods) {
             clang-tidy -p build_tidy $m.FullName
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+
+          $tus = @()
+          $tus += Get-ChildItem -Path test bench -Recurse -File | Where-Object { $_.Extension -in @(".cpp", ".cc", ".cxx") }
+          foreach ($tu in $tus) {
+            clang-tidy -p build_tidy $tu.FullName
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
 

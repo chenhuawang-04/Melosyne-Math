@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace fmbench {
+namespace FmBench {
 
 struct BenchConfig {
     int warmup_rounds = 3;
@@ -36,13 +36,13 @@ struct SampleStats {
 struct BenchmarkCase {
     std::string suite;
     std::string name;
-    void (*fn)(const RunOptions& options);
+    void (*fn)(const RunOptions& options_);
 };
 
 class Registry {
 public:
     static Registry& instance();
-    bool add(std::string suite, std::string name, void (*fn)(const RunOptions&));
+    bool add(std::string suite_, std::string name_, void (*fn_)(const RunOptions&));
     const std::vector<BenchmarkCase>& cases() const noexcept;
 
 private:
@@ -52,7 +52,7 @@ private:
 bool registerCase(const char* suite_, const char* name_, void (*fn_)(const RunOptions& options_));
 
 SampleStats measureBackend(
-    const BackendTask& task,
+    const BackendTask& task_,
     std::size_t ops_per_call_,
     const BenchConfig& config_);
 
@@ -64,19 +64,21 @@ void runComparisonCase(
 
 int runAll(const RunOptions& options_ = {});
 
-void consume(double value);
+void consume(double value_);
 double sinkValue();
 int invalidSinkInputs();
 
-} // namespace fmbench
+} // namespace FmBench
+
+#undef FM_BENCH
 
 #define FMBENCH_CONCAT_INNER(a, b) a##b
 #define FMBENCH_CONCAT(a, b) FMBENCH_CONCAT_INNER(a, b)
 
 #define FM_BENCH(SUITE, NAME)                                                                  \
-    static void FMBENCH_CONCAT(fm_bench_fn_, __LINE__)(const ::fmbench::RunOptions&);         \
+    static void FMBENCH_CONCAT(fm_bench_fn_, __LINE__)(const ::FmBench::RunOptions&);         \
     namespace {                                                                                 \
     const bool FMBENCH_CONCAT(fm_bench_reg_, __LINE__) =                                       \
-        ::fmbench::registerCase(#SUITE, #NAME, &FMBENCH_CONCAT(fm_bench_fn_, __LINE__));      \
+        ::FmBench::registerCase(#SUITE, #NAME, &FMBENCH_CONCAT(fm_bench_fn_, __LINE__));      \
     }                                                                                           \
-    static void FMBENCH_CONCAT(fm_bench_fn_, __LINE__)(const ::fmbench::RunOptions& options)
+    static void FMBENCH_CONCAT(fm_bench_fn_, __LINE__)(const ::FmBench::RunOptions& options)

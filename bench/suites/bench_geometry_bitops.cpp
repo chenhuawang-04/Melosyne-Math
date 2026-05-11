@@ -13,9 +13,9 @@
 namespace {
 
 struct Rng {
-    explicit Rng(uint32_t seed) : eng(seed) {}
-    float uniform(float lo, float hi) {
-        std::uniform_real_distribution<float> dist(lo, hi);
+    explicit Rng(uint32_t seed_) : eng(seed_) {}
+    float uniform(float lo_, float hi_) {
+        std::uniform_real_distribution<float> dist(lo_, hi_);
         return dist(eng);
     }
     std::mt19937 eng;
@@ -76,14 +76,14 @@ Aabb3Ref transformAabb3ScalarRef(const Aabb3Ref& box_, const MMath::Mat4& m_) no
 } // namespace
 
 FM_BENCH(Geometry, Aabb2ContainsMerge) {
-    constexpr int N = 32768;
+    constexpr int n = 32768;
     Rng rng(0x0F0F0F0FU);
 
-    std::vector<MMath::Aabb2> boxes(N);
-    std::vector<MMath::Vec2> pts(N);
-    std::vector<Aabb2Ref> refs(N);
+    std::vector<MMath::Aabb2> boxes(n);
+    std::vector<MMath::Vec2> pts(n);
+    std::vector<Aabb2Ref> refs(n);
 
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < n; ++i) {
         const float x0 = rng.uniform(-50.0f, 10.0f);
         const float y0 = rng.uniform(-50.0f, 10.0f);
         const float x1 = x0 + rng.uniform(0.1f, 50.0f);
@@ -93,25 +93,25 @@ FM_BENCH(Geometry, Aabb2ContainsMerge) {
         refs[i] = Aabb2Ref{x0, y0, x1, y1};
     }
 
-    fmbench::runComparisonCase(
+    FmBench::runComparisonCase(
         "aabb2 contains + merge",
-        static_cast<std::size_t>(N * 2),
+        static_cast<std::size_t>(n * 2),
         {
             {"fast_math", true, [&]() {
                  double acc = 0.0;
                  MMath::Aabb2 merged = boxes[0];
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      acc += MMath::aabb2ContainsPointAndMergeInPlace(merged, boxes[i], pts[i]) ? 1.0 : 0.0;
                  }
                  acc += MMath::aabb2Area(merged);
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #if FM_HAVE_GLM
             {"glm", true, [&]() {
                  double acc = 0.0;
                  glm::vec2 mn(refs[0].minx, refs[0].miny);
                  glm::vec2 mx(refs[0].maxx, refs[0].maxy);
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      glm::vec2 p(pts[i].x, pts[i].y);
                      glm::vec2 bmn(refs[i].minx, refs[i].miny);
                      glm::vec2 bmx(refs[i].maxx, refs[i].maxy);
@@ -121,7 +121,7 @@ FM_BENCH(Geometry, Aabb2ContainsMerge) {
                      mx = glm::max(mx, bmx);
                  }
                  acc += (mx.x - mn.x) * (mx.y - mn.y);
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"glm", false, {}},
@@ -131,7 +131,7 @@ FM_BENCH(Geometry, Aabb2ContainsMerge) {
                  double acc = 0.0;
                  Eigen::Vector2f mn(refs[0].minx, refs[0].miny);
                  Eigen::Vector2f mx(refs[0].maxx, refs[0].maxy);
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      Eigen::Vector2f p(pts[i].x, pts[i].y);
                      Eigen::Vector2f bmn(refs[i].minx, refs[i].miny);
                      Eigen::Vector2f bmx(refs[i].maxx, refs[i].maxy);
@@ -141,7 +141,7 @@ FM_BENCH(Geometry, Aabb2ContainsMerge) {
                      mx = mx.cwiseMax(bmx);
                  }
                  acc += (mx.x() - mn.x()) * (mx.y() - mn.y());
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"eigen", false, {}},
@@ -152,7 +152,7 @@ FM_BENCH(Geometry, Aabb2ContainsMerge) {
                  double acc = 0.0;
                  XMVECTOR mn = XMVectorSet(refs[0].minx, refs[0].miny, 0.0f, 0.0f);
                  XMVECTOR mx = XMVectorSet(refs[0].maxx, refs[0].maxy, 0.0f, 0.0f);
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      XMVECTOR p = XMVectorSet(pts[i].x, pts[i].y, 0.0f, 0.0f);
                      XMVECTOR bmn = XMVectorSet(refs[i].minx, refs[i].miny, 0.0f, 0.0f);
                      XMVECTOR bmx = XMVectorSet(refs[i].maxx, refs[i].maxy, 0.0f, 0.0f);
@@ -167,7 +167,7 @@ FM_BENCH(Geometry, Aabb2ContainsMerge) {
                  const float w = XMVectorGetX(mx) - XMVectorGetX(mn);
                  const float h = XMVectorGetY(mx) - XMVectorGetY(mn);
                  acc += w * h;
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"directxmath", false, {}},
@@ -177,14 +177,14 @@ FM_BENCH(Geometry, Aabb2ContainsMerge) {
 }
 
 FM_BENCH(Geometry, Aabb2ContainsOnly) {
-    constexpr int N = 32768;
+    constexpr int n = 32768;
     Rng rng(0x0F0F0F0FU);
 
-    std::vector<MMath::Aabb2> boxes(N);
-    std::vector<MMath::Vec2> pts(N);
-    std::vector<Aabb2Ref> refs(N);
+    std::vector<MMath::Aabb2> boxes(n);
+    std::vector<MMath::Vec2> pts(n);
+    std::vector<Aabb2Ref> refs(n);
 
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < n; ++i) {
         const float x0 = rng.uniform(-50.0f, 10.0f);
         const float y0 = rng.uniform(-50.0f, 10.0f);
         const float x1 = x0 + rng.uniform(0.1f, 50.0f);
@@ -194,28 +194,28 @@ FM_BENCH(Geometry, Aabb2ContainsOnly) {
         refs[i] = Aabb2Ref{x0, y0, x1, y1};
     }
 
-    fmbench::runComparisonCase(
+    FmBench::runComparisonCase(
         "aabb2 contains only",
-        static_cast<std::size_t>(N),
+        static_cast<std::size_t>(n),
         {
             {"fast_math", true, [&]() {
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      acc += MMath::aabb2ContainsPoint(boxes[i], pts[i]) ? 1.0 : 0.0;
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #if FM_HAVE_GLM
             {"glm", true, [&]() {
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      glm::vec2 p(pts[i].x, pts[i].y);
                      glm::vec2 bmn(refs[i].minx, refs[i].miny);
                      glm::vec2 bmx(refs[i].maxx, refs[i].maxy);
                      const bool c = p.x >= bmn.x && p.x <= bmx.x && p.y >= bmn.y && p.y <= bmx.y;
                      acc += c ? 1.0 : 0.0;
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"glm", false, {}},
@@ -223,14 +223,14 @@ FM_BENCH(Geometry, Aabb2ContainsOnly) {
 #if FM_HAVE_EIGEN
             {"eigen", true, [&]() {
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      Eigen::Vector2f p(pts[i].x, pts[i].y);
                      Eigen::Vector2f bmn(refs[i].minx, refs[i].miny);
                      Eigen::Vector2f bmx(refs[i].maxx, refs[i].maxy);
                      const bool c = (p.array() >= bmn.array()).all() && (p.array() <= bmx.array()).all();
                      acc += c ? 1.0 : 0.0;
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"eigen", false, {}},
@@ -239,7 +239,7 @@ FM_BENCH(Geometry, Aabb2ContainsOnly) {
             {"directxmath", true, [&]() {
                  using namespace DirectX;
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      XMVECTOR p = XMVectorSet(pts[i].x, pts[i].y, 0.0f, 0.0f);
                      XMVECTOR bmn = XMVectorSet(refs[i].minx, refs[i].miny, 0.0f, 0.0f);
                      XMVECTOR bmx = XMVectorSet(refs[i].maxx, refs[i].maxy, 0.0f, 0.0f);
@@ -248,7 +248,7 @@ FM_BENCH(Geometry, Aabb2ContainsOnly) {
                      XMVECTOR c = XMVectorAndInt(c1, c2);
                      acc += (XMVectorGetX(c) != 0.0f && XMVectorGetY(c) != 0.0f) ? 1.0 : 0.0;
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"directxmath", false, {}},
@@ -258,13 +258,13 @@ FM_BENCH(Geometry, Aabb2ContainsOnly) {
 }
 
 FM_BENCH(Geometry, Aabb2MergeOnly) {
-    constexpr int N = 32768;
+    constexpr int n = 32768;
     Rng rng(0x0F0F0F0FU);
 
-    std::vector<MMath::Aabb2> boxes(N);
-    std::vector<Aabb2Ref> refs(N);
+    std::vector<MMath::Aabb2> boxes(n);
+    std::vector<Aabb2Ref> refs(n);
 
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < n; ++i) {
         const float x0 = rng.uniform(-50.0f, 10.0f);
         const float y0 = rng.uniform(-50.0f, 10.0f);
         const float x1 = x0 + rng.uniform(0.1f, 50.0f);
@@ -273,29 +273,29 @@ FM_BENCH(Geometry, Aabb2MergeOnly) {
         refs[i] = Aabb2Ref{x0, y0, x1, y1};
     }
 
-    fmbench::runComparisonCase(
+    FmBench::runComparisonCase(
         "aabb2 merge only",
-        static_cast<std::size_t>(N),
+        static_cast<std::size_t>(n),
         {
             {"fast_math", true, [&]() {
                  MMath::Aabb2 merged = boxes[0];
-                 for (int i = 1; i < N; ++i) {
+                 for (int i = 1; i < n; ++i) {
                      MMath::aabb2MergeInPlace(merged, boxes[i]);
                  }
                  const double area = static_cast<double>(MMath::aabb2Area(merged));
-                 fmbench::consume(area);
+                 FmBench::consume(area);
              }},
 #if FM_HAVE_GLM
             {"glm", true, [&]() {
                  glm::vec2 mn(refs[0].minx, refs[0].miny);
                  glm::vec2 mx(refs[0].maxx, refs[0].maxy);
-                 for (int i = 1; i < N; ++i) {
+                 for (int i = 1; i < n; ++i) {
                      glm::vec2 bmn(refs[i].minx, refs[i].miny);
                      glm::vec2 bmx(refs[i].maxx, refs[i].maxy);
                      mn = glm::min(mn, bmn);
                      mx = glm::max(mx, bmx);
                  }
-                 fmbench::consume(static_cast<double>((mx.x - mn.x) * (mx.y - mn.y)));
+                FmBench::consume(static_cast<double>((mx.x - mn.x) * (mx.y - mn.y)));
              }},
 #else
             {"glm", false, {}},
@@ -304,13 +304,13 @@ FM_BENCH(Geometry, Aabb2MergeOnly) {
             {"eigen", true, [&]() {
                  Eigen::Vector2f mn(refs[0].minx, refs[0].miny);
                  Eigen::Vector2f mx(refs[0].maxx, refs[0].maxy);
-                 for (int i = 1; i < N; ++i) {
+                 for (int i = 1; i < n; ++i) {
                      Eigen::Vector2f bmn(refs[i].minx, refs[i].miny);
                      Eigen::Vector2f bmx(refs[i].maxx, refs[i].maxy);
                      mn = mn.cwiseMin(bmn);
                      mx = mx.cwiseMax(bmx);
                  }
-                 fmbench::consume(static_cast<double>((mx.x() - mn.x()) * (mx.y() - mn.y())));
+                 FmBench::consume(static_cast<double>((mx.x() - mn.x()) * (mx.y() - mn.y())));
              }},
 #else
             {"eigen", false, {}},
@@ -320,7 +320,7 @@ FM_BENCH(Geometry, Aabb2MergeOnly) {
                  using namespace DirectX;
                  XMVECTOR mn = XMVectorSet(refs[0].minx, refs[0].miny, 0.0f, 0.0f);
                  XMVECTOR mx = XMVectorSet(refs[0].maxx, refs[0].maxy, 0.0f, 0.0f);
-                 for (int i = 1; i < N; ++i) {
+                 for (int i = 1; i < n; ++i) {
                      XMVECTOR bmn = XMVectorSet(refs[i].minx, refs[i].miny, 0.0f, 0.0f);
                      XMVECTOR bmx = XMVectorSet(refs[i].maxx, refs[i].maxy, 0.0f, 0.0f);
                      mn = XMVectorMin(mn, bmn);
@@ -328,7 +328,7 @@ FM_BENCH(Geometry, Aabb2MergeOnly) {
                  }
                  const float w = XMVectorGetX(mx) - XMVectorGetX(mn);
                  const float h = XMVectorGetY(mx) - XMVectorGetY(mn);
-                 fmbench::consume(static_cast<double>(w * h));
+                 FmBench::consume(static_cast<double>(w * h));
              }},
 #else
             {"directxmath", false, {}},
@@ -338,14 +338,14 @@ FM_BENCH(Geometry, Aabb2MergeOnly) {
 }
 
 FM_BENCH(Geometry, Aabb3OverlapTransform) {
-    constexpr int N = 16384;
+    constexpr int n = 16384;
     Rng rng(0x22223333U);
 
-    std::vector<MMath::Aabb3> a(N), b(N);
-    std::vector<MMath::Mat4> tr(N);
-    std::vector<Aabb3Ref> ra(N), rb(N);
+    std::vector<MMath::Aabb3> a(n), b(n);
+    std::vector<MMath::Mat4> tr(n);
+    std::vector<Aabb3Ref> ra(n), rb(n);
 
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < n; ++i) {
         float ax0 = rng.uniform(-40.0f, 10.0f), ay0 = rng.uniform(-40.0f, 10.0f), az0 = rng.uniform(-40.0f, 10.0f);
         float ax1 = ax0 + rng.uniform(0.1f, 40.0f), ay1 = ay0 + rng.uniform(0.1f, 40.0f), az1 = az0 + rng.uniform(0.1f, 40.0f);
         float bx0 = rng.uniform(-40.0f, 10.0f), by0 = rng.uniform(-40.0f, 10.0f), bz0 = rng.uniform(-40.0f, 10.0f);
@@ -358,22 +358,22 @@ FM_BENCH(Geometry, Aabb3OverlapTransform) {
         rb[i] = Aabb3Ref{bx0, by0, bz0, bx1, by1, bz1};
     }
 
-    fmbench::runComparisonCase(
+    FmBench::runComparisonCase(
         "aabb3 overlap + transform",
-        static_cast<std::size_t>(N * 2),
+        static_cast<std::size_t>(n * 2),
         {
             {"fast_math", true, [&]() {
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      acc += MMath::aabb3Overlap(a[i], b[i]) ? 1.0 : 0.0;
                      auto t = MMath::aabb3Transform(a[i], tr[i]);
                      acc += MMath::aabb3Volume(t) * 1e-6;
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
             {"scalar_ref", true, [&]() {
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      const bool overlap = !(ra[i].maxx < rb[i].minx || rb[i].maxx < ra[i].minx ||
                                             ra[i].maxy < rb[i].miny || rb[i].maxy < ra[i].miny ||
                                             ra[i].maxz < rb[i].minz || rb[i].maxz < ra[i].minz);
@@ -385,7 +385,7 @@ FM_BENCH(Geometry, Aabb3OverlapTransform) {
                      const float d = ta.maxz - ta.minz;
                      acc += (w * h * d) * 1e-6;
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
         },
         options.config);
@@ -395,48 +395,57 @@ FM_BENCH(BitOps, ThroughputScalarVsOptimized) {
     using namespace MMath;
     using namespace MMath::BitOps;
 
-    constexpr int N = 4096;
-    constexpr int ROUNDS = 2048;
+    constexpr std::size_t n = 4096;
+    constexpr int rounds = 2048;
 
-    BitSet<N> a{}, b{};
-    for (int i = 0; i < N; i += 3) set(a, i);
-    for (int i = 0; i < N; i += 5) set(b, i);
+    BitSet<n> a{}, b{};
+    for (std::size_t i = 0; i < n; i += 3) set(a, i);
+    for (std::size_t i = 0; i < n; i += 5) set(b, i);
 
-    fmbench::runComparisonCase(
+    FmBench::runComparisonCase(
         "bitset and+count+rank kernel",
-        static_cast<std::size_t>(ROUNDS * 3),
+        static_cast<std::size_t>(rounds * 3),
         {
             {"scalar", true, [&]() {
                  double acc = 0.0;
-                 BitSet<N> x = a;
-                 for (int r = 0; r < ROUNDS; ++r) {
+                 BitSet<n> x = a;
+                 for (int r = 0; r < rounds; ++r) {
                      bitwiseAnd(x, b);
                      acc += static_cast<double>(popcount(x));
-                     acc += static_cast<double>(rank(x, (r * 17) % N));
-                     flipRange(x, (r * 13) % N, ((r * 13) % N) + 7);
+                     acc += static_cast<double>(rank(x, static_cast<std::size_t>((r * 17) % static_cast<int>(n))));
+                     flipRange(
+                         x,
+                         static_cast<std::size_t>((r * 13) % static_cast<int>(n)),
+                         static_cast<std::size_t>(((r * 13) % static_cast<int>(n)) + 7));
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
             {"scalar_fused", true, [&]() {
                  double acc = 0.0;
-                 BitSet<N> x = a;
-                 for (int r = 0; r < ROUNDS; ++r) {
+                 BitSet<n> x = a;
+                 for (int r = 0; r < rounds; ++r) {
                      acc += static_cast<double>(bitwiseAndCount(x, b));
-                     acc += static_cast<double>(rank(x, (r * 17) % N));
-                     flipRange(x, (r * 13) % N, ((r * 13) % N) + 7);
+                     acc += static_cast<double>(rank(x, static_cast<std::size_t>((r * 17) % static_cast<int>(n))));
+                     flipRange(
+                         x,
+                         static_cast<std::size_t>((r * 13) % static_cast<int>(n)),
+                         static_cast<std::size_t>(((r * 13) % static_cast<int>(n)) + 7));
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #if defined(__AVX2__) || defined(__SSE4_1__)
             {"optimized", true, [&]() {
                  double acc = 0.0;
-                 BitSet<N> x = a;
-                 for (int r = 0; r < ROUNDS; ++r) {
+                 BitSet<n> x = a;
+                 for (int r = 0; r < rounds; ++r) {
                      acc += static_cast<double>(bitwiseAndCountOptimized(x, b));
-                     acc += static_cast<double>(rankOptimized(x, (r * 17) % N));
-                     flipRangeOptimized(x, (r * 13) % N, ((r * 13) % N) + 7);
+                     acc += static_cast<double>(rankOptimized(x, static_cast<std::size_t>((r * 17) % static_cast<int>(n))));
+                     flipRangeOptimized(
+                         x,
+                         static_cast<std::size_t>((r * 13) % static_cast<int>(n)),
+                         static_cast<std::size_t>(((r * 13) % static_cast<int>(n)) + 7));
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"optimized", false, {}},

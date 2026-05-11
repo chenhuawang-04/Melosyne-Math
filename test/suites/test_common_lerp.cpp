@@ -28,7 +28,7 @@ FM_TEST(Common, ExactCases) {
 }
 
 FM_TEST(Common, RandomAgainstReference) {
-    fmtest::Rng rng(0x12345678U);
+    FmTest::Rng rng(0x12345678U);
 
     for (int i = 0; i < 5000; ++i) {
         const float a = rng.uniform(-200.0f, 200.0f);
@@ -49,7 +49,7 @@ FM_TEST(Common, RandomAgainstReference) {
 }
 
 FM_TEST(Common, ArrayOpsConsistency) {
-    fmtest::Rng rng(0xBADC0DEU);
+    FmTest::Rng rng(0xBADC0DEU);
 
     for (int n : {1, 3, 4, 7, 8, 15, 16, 33, 64, 97}) {
         std::vector<float> a(n), b(n), expected(n);
@@ -80,7 +80,7 @@ FM_TEST(Common, ArrayOpsConsistency) {
 }
 
 FM_TEST(Lerp, ScalarRoundTripAndRanges) {
-    fmtest::Rng rng(0xDEADBEEFU);
+    FmTest::Rng rng(0xDEADBEEFU);
 
     for (int i = 0; i < 6000; ++i) {
         const float a = rng.uniform(-50.0f, 50.0f);
@@ -136,7 +136,7 @@ FM_TEST(Lerp, SmoothFunctionsMonotonicity) {
 }
 
 FM_TEST(Lerp, ArrayOpsConsistency) {
-    fmtest::Rng rng(0x77889911U);
+    FmTest::Rng rng(0x77889911U);
 
     for (int n : {1, 5, 8, 17, 32, 65, 128}) {
         std::vector<float> a(n), b(n), out(n), ref(n);

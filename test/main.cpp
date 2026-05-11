@@ -4,7 +4,7 @@
 #include <string>
 
 int main(int argc, char** argv) {
-    fmtest::RunOptions options;
+    FmTest::RunOptions options;
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -20,6 +20,6 @@ int main(int argc, char** argv) {
         }
     }
 
-    const fmtest::RunSummary summary = fmtest::runAllTests(options);
+    const FmTest::RunSummary summary = FmTest::runAllTests(options);
     return summary.failed == 0 ? 0 : 1;
 }

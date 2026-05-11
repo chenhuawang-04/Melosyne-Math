@@ -9,17 +9,17 @@
 
 namespace {
 
-bool ref_contains_2d(const MMath::Aabb2& a, const MMath::Vec2& p) {
-    auto mn = MMath::aabb2Min(a);
-    auto mx = MMath::aabb2Max(a);
-    return p.x >= mn.x && p.x <= mx.x && p.y >= mn.y && p.y <= mx.y;
+bool refContains2d(const MMath::Aabb2& a_, const MMath::Vec2& p_) {
+    auto mn = MMath::aabb2Min(a_);
+    auto mx = MMath::aabb2Max(a_);
+    return p_.x >= mn.x && p_.x <= mx.x && p_.y >= mn.y && p_.y <= mx.y;
 }
 
-bool ref_overlap_3d(const MMath::Aabb3& a, const MMath::Aabb3& b) {
-    auto amin = MMath::aabb3Min(a);
-    auto amax = MMath::aabb3Max(a);
-    auto bmin = MMath::aabb3Min(b);
-    auto bmax = MMath::aabb3Max(b);
+bool refOverlap3d(const MMath::Aabb3& a_, const MMath::Aabb3& b_) {
+    auto amin = MMath::aabb3Min(a_);
+    auto amax = MMath::aabb3Max(a_);
+    auto bmin = MMath::aabb3Min(b_);
+    auto bmax = MMath::aabb3Max(b_);
     return !(amax.x < bmin.x || bmax.x < amin.x ||
              amax.y < bmin.y || bmax.y < amin.y ||
              amax.z < bmin.z || bmax.z < amin.z);
@@ -46,7 +46,7 @@ FM_TEST(Aabb2, BasicProperties) {
 }
 
 FM_TEST(Aabb2, RandomizedContainmentAndMerge) {
-    fmtest::Rng rng(0xABCDEF01U);
+    FmTest::Rng rng(0xABCDEF01U);
 
     for (int i = 0; i < 5000; ++i) {
         MMath::Vec2 a{rng.uniform(-20.0f, 0.0f), rng.uniform(-20.0f, 0.0f)};
@@ -54,7 +54,7 @@ FM_TEST(Aabb2, RandomizedContainmentAndMerge) {
         MMath::Aabb2 box = MMath::aabb2FromMinMax(a, b);
 
         MMath::Vec2 p{rng.uniform(-30.0f, 30.0f), rng.uniform(-30.0f, 30.0f)};
-        FM_REQUIRE(MMath::aabb2ContainsPoint(box, p) == ref_contains_2d(box, p));
+        FM_REQUIRE(MMath::aabb2ContainsPoint(box, p) == refContains2d(box, p));
 
         MMath::Vec2 c{rng.uniform(-20.0f, 0.0f), rng.uniform(-20.0f, 0.0f)};
         MMath::Vec2 d{rng.uniform(0.0f, 20.0f), rng.uniform(0.0f, 20.0f)};
@@ -116,7 +116,7 @@ FM_TEST(Aabb3, BasicPropertiesAndIntersection) {
 }
 
 FM_TEST(Aabb3, RandomizedOverlapAndUnion) {
-    fmtest::Rng rng(0x01020304U);
+    FmTest::Rng rng(0x01020304U);
 
     for (int i = 0; i < 4000; ++i) {
         MMath::Vec3 a{rng.uniform(-15.0f, 0.0f), rng.uniform(-15.0f, 0.0f), rng.uniform(-15.0f, 0.0f)};
@@ -127,13 +127,13 @@ FM_TEST(Aabb3, RandomizedOverlapAndUnion) {
         MMath::Vec3 d{rng.uniform(0.0f, 15.0f), rng.uniform(0.0f, 15.0f), rng.uniform(0.0f, 15.0f)};
         MMath::Aabb3 y = MMath::aabb3FromMinMax(c, d);
 
-        FM_REQUIRE(MMath::aabb3Overlap(x, y) == ref_overlap_3d(x, y));
+        FM_REQUIRE(MMath::aabb3Overlap(x, y) == refOverlap3d(x, y));
 
         MMath::Aabb3 uni = MMath::aabb3Union(x, y);
         FM_REQUIRE(MMath::aabb3ContainsAabb(uni, x));
         FM_REQUIRE(MMath::aabb3ContainsAabb(uni, y));
 
-        MMath::Vec3 p = fmtest::randomVec3(rng, -20.0f, 20.0f);
+        MMath::Vec3 p = FmTest::randomVec3(rng, -20.0f, 20.0f);
         MMath::Aabb3 expanded = MMath::aabb3ExpandToPoint(x, p);
         FM_REQUIRE(MMath::aabb3Contains(expanded, p));
     }

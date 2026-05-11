@@ -7,7 +7,7 @@
 #include <iostream>
 #include <numeric>
 
-namespace fmbench {
+namespace FmBench {
 
 namespace {
 volatile double g_sink = 0.0;
@@ -19,8 +19,8 @@ Registry& Registry::instance() {
     return r;
 }
 
-bool Registry::add(std::string suite, std::string name, void (*fn)(const RunOptions&)) {
-    bench_cases.push_back(BenchmarkCase{std::move(suite), std::move(name), fn});
+bool Registry::add(std::string suite_, std::string name_, void (*fn_)(const RunOptions&)) {
+    bench_cases.push_back(BenchmarkCase{std::move(suite_), std::move(name_), fn_});
     return true;
 }
 
@@ -32,12 +32,12 @@ bool registerCase(const char* suite_, const char* name_, void (*fn_)(const RunOp
     return Registry::instance().add(suite_, name_, fn_);
 }
 
-void consume(double value) {
-    if (!std::isfinite(value)) {
+void consume(double value_) {
+    if (!std::isfinite(value_)) {
         ++g_invalid_sink_inputs;
         return;
     }
-    g_sink += value;
+    g_sink += value_;
 }
 
 double sinkValue() {
@@ -49,11 +49,11 @@ int invalidSinkInputs() {
 }
 
 SampleStats measureBackend(
-    const BackendTask& task,
+    const BackendTask& task_,
     std::size_t ops_per_call_,
     const BenchConfig& config_) {
     SampleStats stats{};
-    if (!task.enabled || !task.fn || ops_per_call_ == 0) {
+    if (!task_.enabled || !task_.fn || ops_per_call_ == 0) {
         return stats;
     }
 
@@ -62,21 +62,21 @@ SampleStats measureBackend(
 
     for (int repeat = 0; repeat < std::max(1, config_.repeats); ++repeat) {
         for (int w = 0; w < std::max(0, config_.warmup_rounds); ++w) {
-            task.fn();
+            task_.fn();
         }
 
         const int min_calls = std::max(1, config_.measure_rounds);
         int measured_calls = 0;
         double elapsed_ns = 0.0;
 
-        auto run_chunk = [&](int calls) {
+        auto run_chunk = [&](int calls_) {
             const auto begin = std::chrono::steady_clock::now();
-            for (int i = 0; i < calls; ++i) {
-                task.fn();
+            for (int i = 0; i < calls_; ++i) {
+                task_.fn();
             }
             const auto end = std::chrono::steady_clock::now();
             elapsed_ns += std::chrono::duration<double, std::nano>(end - begin).count();
-            measured_calls += calls;
+            measured_calls += calls_;
         };
 
         run_chunk(min_calls);
@@ -195,9 +195,9 @@ void runComparisonCase(
 
 int runAll(const RunOptions& options_) {
     std::vector<BenchmarkCase> cases = Registry::instance().cases();
-    std::sort(cases.begin(), cases.end(), [](const BenchmarkCase& a, const BenchmarkCase& b) {
-        if (a.suite == b.suite) return a.name < b.name;
-        return a.suite < b.suite;
+    std::sort(cases.begin(), cases.end(), [](const BenchmarkCase& a_, const BenchmarkCase& b_) {
+        if (a_.suite == b_.suite) return a_.name < b_.name;
+        return a_.suite < b_.suite;
     });
 
     std::string current_suite;
@@ -230,4 +230,4 @@ int runAll(const RunOptions& options_) {
     return 0;
 }
 
-} // namespace fmbench
+} // namespace FmBench

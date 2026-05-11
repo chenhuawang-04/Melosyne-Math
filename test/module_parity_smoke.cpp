@@ -21,8 +21,8 @@ import fast_math.bit_ops_advanced;
 import fast_math.bit_ops_advanced_simd;
 
 int moduleParitySmoke() {
-    auto abs_diff = [](float a, float b) {
-        float d = a - b;
+    auto abs_diff = [](float a_, float b_) {
+        float d = a_ - b_;
         return d < 0.0f ? -d : d;
     };
 
@@ -86,15 +86,15 @@ int moduleParitySmoke() {
         return 11;
     }
 
-    auto ndc_depth = [&](const MMath::Vec4& clip) {
-        return clip.z / clip.w;
+    auto ndc_depth = [&](const MMath::Vec4& clip_) {
+        return clip_.z / clip_.w;
     };
 
-    constexpr float kNear = 0.5f;
-    constexpr float kFar = 10.0f;
-    const MMath::Mat4 proj = MMath::mat4Perspective(1.0f, 1.0f, kNear, kFar);
-    const float near_depth = ndc_depth(MMath::mat4MultiplyVec4(proj, MMath::Vec4{0.0f, 0.0f, -kNear, 1.0f}));
-    const float far_depth = ndc_depth(MMath::mat4MultiplyVec4(proj, MMath::Vec4{0.0f, 0.0f, -kFar, 1.0f}));
+    constexpr float near_z = 0.5f;
+    constexpr float far_z = 10.0f;
+    const MMath::Mat4 proj = MMath::mat4Perspective(1.0f, 1.0f, near_z, far_z);
+    const float near_depth = ndc_depth(MMath::mat4MultiplyVec4(proj, MMath::Vec4{0.0f, 0.0f, -near_z, 1.0f}));
+    const float far_depth = ndc_depth(MMath::mat4MultiplyVec4(proj, MMath::Vec4{0.0f, 0.0f, -far_z, 1.0f}));
     if (abs_diff(near_depth, 0.0f) >= 1e-4f) {
         return 12;
     }

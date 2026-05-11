@@ -5,15 +5,15 @@
 #include <iostream>
 #include <sstream>
 
-namespace fmtest {
+namespace FmTest {
 
 Registry& Registry::instance() {
     static Registry reg;
     return reg;
 }
 
-bool Registry::add(std::string suite, std::string name, TestFn fn) {
-    test_cases.push_back(TestCase{std::move(suite), std::move(name), fn});
+bool Registry::add(std::string suite_, std::string name_, TestFn fn_) {
+    test_cases.push_back(TestCase{std::move(suite_), std::move(name_), fn_});
     return true;
 }
 
@@ -26,14 +26,14 @@ bool registerTest(const char* suite_, const char* name_, TestFn fn_) {
 }
 
 [[noreturn]] void fail(
-    const char* expr,
-    const std::string& detail,
-    const char* file,
-    int line) {
+    const char* expr_,
+    const std::string& detail_,
+    const char* file_,
+    int line_) {
     std::ostringstream oss;
-    oss << file << ':' << line << "\n"
-        << "  expression: " << expr << "\n"
-        << "  detail    : " << detail;
+    oss << file_ << ':' << line_ << "\n"
+        << "  expression: " << expr_ << "\n"
+        << "  detail    : " << detail_;
     throw TestFailure(oss.str());
 }
 
@@ -109,11 +109,11 @@ void requireEq(
 
 RunSummary runAllTests(const RunOptions& options_) {
     std::vector<TestCase> tests = Registry::instance().tests();
-    std::sort(tests.begin(), tests.end(), [](const TestCase& a, const TestCase& b) {
-        if (a.suite == b.suite) {
-            return a.name < b.name;
+    std::sort(tests.begin(), tests.end(), [](const TestCase& a_, const TestCase& b_) {
+        if (a_.suite == b_.suite) {
+            return a_.name < b_.name;
         }
-        return a.suite < b.suite;
+        return a_.suite < b_.suite;
     });
 
     const auto wall_start = std::chrono::steady_clock::now();
@@ -179,4 +179,4 @@ RunSummary runAllTests(const RunOptions& options_) {
     return summary;
 }
 
-} // namespace fmtest
+} // namespace FmTest

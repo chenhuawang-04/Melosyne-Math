@@ -5,7 +5,7 @@
 #include <string>
 
 int main(int argc, char** argv) {
-    fmbench::RunOptions options;
+    FmBench::RunOptions options;
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -36,5 +36,5 @@ int main(int argc, char** argv) {
         }
     }
 
-    return fmbench::runAll(options);
+    return FmBench::runAll(options);
 }

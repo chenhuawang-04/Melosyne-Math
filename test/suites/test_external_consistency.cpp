@@ -51,11 +51,11 @@ inline Eigen::Matrix4f to_eigen(const MMath::Mat4& m) {
 } // namespace
 
 FM_TEST(External, Vector3Consistency) {
-    fmtest::Rng rng(0x5A5A5A5AU);
+    FmTest::Rng rng(0x5A5A5A5AU);
 
     for (int i = 0; i < 3000; ++i) {
-        MMath::Vec3 a = fmtest::randomVec3(rng, -10.0f, 10.0f);
-        MMath::Vec3 b = fmtest::randomVec3(rng, -10.0f, 10.0f);
+        MMath::Vec3 a = FmTest::randomVec3(rng, -10.0f, 10.0f);
+        MMath::Vec3 b = FmTest::randomVec3(rng, -10.0f, 10.0f);
 
         const float dot_fast = MMath::vec3Dot(a, b);
         const MMath::Vec3 cross_fast = MMath::vec3Cross(a, b);
@@ -111,12 +111,12 @@ FM_TEST(External, Vector3Consistency) {
 }
 
 FM_TEST(External, Matrix4ConsistencyGlmEigen) {
-    fmtest::Rng rng(0x01010A0AU);
+    FmTest::Rng rng(0x01010A0AU);
 
     for (int i = 0; i < 1500; ++i) {
-        MMath::Mat4 a = fmtest::randomMat4(rng, -2.0f, 2.0f);
-        MMath::Mat4 b = fmtest::randomMat4(rng, -2.0f, 2.0f);
-        MMath::Vec4 v = fmtest::randomVec4(rng, -2.0f, 2.0f);
+        MMath::Mat4 a = FmTest::randomMat4(rng, -2.0f, 2.0f);
+        MMath::Mat4 b = FmTest::randomMat4(rng, -2.0f, 2.0f);
+        MMath::Vec4 v = FmTest::randomVec4(rng, -2.0f, 2.0f);
 
         const MMath::Mat4 m_fast = MMath::mat4Multiply(a, b);
         const MMath::Vec4 v_fast = MMath::mat4MultiplyVec4(a, v);

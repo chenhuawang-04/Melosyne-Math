@@ -23,17 +23,17 @@ std::vector<float> makeSignal(int n_, float start_) {
 } // namespace
 
 FM_BENCH(ScalarMath, SingleValueKernel) {
-    constexpr int N = 8192;
-    const std::vector<float> a = makeSignal(N, -0.2f);
-    const std::vector<float> b = makeSignal(N, 0.5f);
+    constexpr int n = 8192;
+    const std::vector<float> a = makeSignal(n, -0.2f);
+    const std::vector<float> b = makeSignal(n, 0.5f);
 
-    fmbench::runComparisonCase(
+    FmBench::runComparisonCase(
         "single-value mixed math kernel",
-        static_cast<std::size_t>(N),
+        static_cast<std::size_t>(n),
         {
             {"fast_math", true, [&]() {
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      const float x = a[i];
                      const float y = b[i];
                      const float v1 = MMath::clamp(MMath::lerp(x, y, 0.37f), -2.0f, 2.0f);
@@ -42,11 +42,11 @@ FM_BENCH(ScalarMath, SingleValueKernel) {
                      const float v4 = MMath::sin(v1) + MMath::cos(v2);
                      acc += static_cast<double>(v1 + v2 + v3 + v4);
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
             {"std_math", true, [&]() {
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      const float x = a[i];
                      const float y = b[i];
                      const float v1 = std::clamp(x + 0.37f * (y - x), -2.0f, 2.0f);
@@ -55,60 +55,60 @@ FM_BENCH(ScalarMath, SingleValueKernel) {
                      const float v4 = std::sin(v1) + std::cos(v2);
                      acc += static_cast<double>(v1 + v2 + v3 + v4);
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
         },
         options.config);
 }
 
 FM_BENCH(ScalarMath, BatchArrayKernel) {
-    constexpr int N = 16384;
-    const std::vector<float> base1 = makeSignal(N, -1.0f);
+    constexpr int n = 16384;
+    const std::vector<float> base1 = makeSignal(n, -1.0f);
     // Keep this strictly positive to avoid domain errors in sqrt().
-    const std::vector<float> base2 = makeSignal(N, 1.0f);
-    const std::vector<float> angles = makeSignal(N, -3.14f);
+    const std::vector<float> base2 = makeSignal(n, 1.0f);
+    const std::vector<float> angles = makeSignal(n, -3.14f);
 
-    std::vector<float> x_fast(N), y_fast(N), sin_fast(N), cos_fast(N);
-    std::vector<float> x_std(N), y_std(N), sin_std(N), cos_std(N);
+    std::vector<float> x_fast(n), y_fast(n), sin_fast(n), cos_fast(n);
+    std::vector<float> x_std(n), y_std(n), sin_std(n), cos_std(n);
 
-    fmbench::runComparisonCase(
+    FmBench::runComparisonCase(
         "batch array kernel (clamp/min/sqrt/exp/sincos)",
-        static_cast<std::size_t>(N * 5),
+        static_cast<std::size_t>(n * 5),
         {
             {"fast_math", true, [&]() {
                  x_fast = base1;
                  y_fast = base2;
 
-                 MMath::minArray(x_fast.data(), y_fast.data(), N);
-                 MMath::clampArray(x_fast.data(), -1.5f, 1.5f, N);
-                 MMath::sqrtArray(y_fast.data(), N);
-                 MMath::expArray(y_fast.data(), N);
-                 MMath::sincosArray(angles.data(), sin_fast.data(), cos_fast.data(), N);
+                 MMath::minArray(x_fast.data(), y_fast.data(), n);
+                 MMath::clampArray(x_fast.data(), -1.5f, 1.5f, n);
+                 MMath::sqrtArray(y_fast.data(), n);
+                 MMath::expArray(y_fast.data(), n);
+                 MMath::sincosArray(angles.data(), sin_fast.data(), cos_fast.data(), n);
 
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      acc += x_fast[i] + y_fast[i] + sin_fast[i] + cos_fast[i];
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
             {"std_math", true, [&]() {
                  x_std = base1;
                  y_std = base2;
 
-                 for (int i = 0; i < N; ++i) x_std[i] = std::min(x_std[i], y_std[i]);
-                 for (int i = 0; i < N; ++i) x_std[i] = std::clamp(x_std[i], -1.5f, 1.5f);
-                 for (int i = 0; i < N; ++i) y_std[i] = std::sqrt(y_std[i]);
-                 for (int i = 0; i < N; ++i) y_std[i] = std::exp(y_std[i]);
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) x_std[i] = std::min(x_std[i], y_std[i]);
+                 for (int i = 0; i < n; ++i) x_std[i] = std::clamp(x_std[i], -1.5f, 1.5f);
+                 for (int i = 0; i < n; ++i) y_std[i] = std::sqrt(y_std[i]);
+                 for (int i = 0; i < n; ++i) y_std[i] = std::exp(y_std[i]);
+                 for (int i = 0; i < n; ++i) {
                      sin_std[i] = std::sin(angles[i]);
                      cos_std[i] = std::cos(angles[i]);
                  }
 
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      acc += x_std[i] + y_std[i] + sin_std[i] + cos_std[i];
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
         },
         options.config);

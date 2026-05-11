@@ -62,60 +62,60 @@ std::vector<MMath::Mat4> makeMat4Data(int n_, Rng& rng_) {
 } // namespace
 
 FM_BENCH(Vector, Vec3DotCrossNormalize) {
-    constexpr int N = 16384;
+    constexpr int n = 16384;
     auto rng = makeRng();
 
-    const auto a = makeVec3Data(N, rng);
-    const auto b = makeVec3Data(N, rng);
+    const auto a = makeVec3Data(n, rng);
+    const auto b = makeVec3Data(n, rng);
 
 #if FM_HAVE_GLM
-    std::vector<glm::vec3> ga(N), gb(N);
-    for (int i = 0; i < N; ++i) {
-        ga[i] = fmbench::adapters::to_glm(a[i]);
-        gb[i] = fmbench::adapters::to_glm(b[i]);
+    std::vector<glm::vec3> ga(n), gb(n);
+    for (int i = 0; i < n; ++i) {
+        ga[i] = FmBench::Adapters::toGlm(a[i]);
+        gb[i] = FmBench::Adapters::toGlm(b[i]);
     }
 #endif
 
 #if FM_HAVE_EIGEN
-    std::vector<Eigen::Vector3f> ea(N), eb(N);
-    for (int i = 0; i < N; ++i) {
-        ea[i] = fmbench::adapters::to_eigen(a[i]);
-        eb[i] = fmbench::adapters::to_eigen(b[i]);
+    std::vector<Eigen::Vector3f> ea(n), eb(n);
+    for (int i = 0; i < n; ++i) {
+        ea[i] = FmBench::Adapters::toEigen(a[i]);
+        eb[i] = FmBench::Adapters::toEigen(b[i]);
     }
 #endif
 
 #if FM_HAVE_DIRECTXMATH
-    std::vector<DirectX::XMFLOAT3> da(N), db(N);
-    for (int i = 0; i < N; ++i) {
+    std::vector<DirectX::XMFLOAT3> da(n), db(n);
+    for (int i = 0; i < n; ++i) {
         da[i] = DirectX::XMFLOAT3(a[i].x, a[i].y, a[i].z);
         db[i] = DirectX::XMFLOAT3(b[i].x, b[i].y, b[i].z);
     }
 #endif
 
-    fmbench::runComparisonCase(
+    FmBench::runComparisonCase(
         "vec3 dot+cross+normalize",
-        static_cast<std::size_t>(N * 3),
+        static_cast<std::size_t>(n * 3),
         {
             {"fast_math", true, [&]() {
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      acc += MMath::vec3Dot(a[i], b[i]);
                      auto c = MMath::vec3Cross(a[i], b[i]);
                      auto n = MMath::vec3Normalize(MMath::vec3Add(a[i], MMath::Vec3{0.1f, 0.2f, 0.3f}));
                      acc += c.x + c.y + c.z + n.x + n.y + n.z;
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #if FM_HAVE_GLM
             {"glm", true, [&]() {
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      acc += glm::dot(ga[i], gb[i]);
                      glm::vec3 c = glm::cross(ga[i], gb[i]);
                      glm::vec3 n = glm::normalize(ga[i] + glm::vec3(0.1f, 0.2f, 0.3f));
                      acc += c.x + c.y + c.z + n.x + n.y + n.z;
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"glm", false, {}},
@@ -123,13 +123,13 @@ FM_BENCH(Vector, Vec3DotCrossNormalize) {
 #if FM_HAVE_EIGEN
             {"eigen", true, [&]() {
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      acc += ea[i].dot(eb[i]);
                      Eigen::Vector3f c = ea[i].cross(eb[i]);
                      Eigen::Vector3f n = (ea[i] + Eigen::Vector3f(0.1f, 0.2f, 0.3f)).normalized();
                      acc += c.x() + c.y() + c.z() + n.x() + n.y() + n.z();
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"eigen", false, {}},
@@ -138,7 +138,7 @@ FM_BENCH(Vector, Vec3DotCrossNormalize) {
             {"directxmath", true, [&]() {
                  using namespace DirectX;
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      XMVECTOR va = XMLoadFloat3(&da[i]);
                      XMVECTOR vb = XMLoadFloat3(&db[i]);
                      acc += XMVectorGetX(XMVector3Dot(va, vb));
@@ -147,7 +147,7 @@ FM_BENCH(Vector, Vec3DotCrossNormalize) {
                      acc += XMVectorGetX(c) + XMVectorGetY(c) + XMVectorGetZ(c) +
                             XMVectorGetX(n) + XMVectorGetY(n) + XMVectorGetZ(n);
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"directxmath", false, {}},
@@ -159,37 +159,37 @@ FM_BENCH(Vector, Vec3DotCrossNormalize) {
 FM_BENCH(Matrix, Mat4MulMulVecTransposeInverse) {
     auto rng = makeRng();
 
-    constexpr int N_MUL = 2048;
-    constexpr int N_INV = 256;
+    constexpr int n_mul = 2048;
+    constexpr int n_inv = 256;
 
-    const auto a = makeMat4Data(N_MUL, rng);
-    const auto b = makeMat4Data(N_MUL, rng);
-    const auto v = makeVec4Data(N_MUL, rng);
+    const auto a = makeMat4Data(n_mul, rng);
+    const auto b = makeMat4Data(n_mul, rng);
+    const auto v = makeVec4Data(n_mul, rng);
 
 #if FM_HAVE_GLM
-    std::vector<glm::mat4> ga(N_MUL), gb(N_MUL);
-    std::vector<glm::vec4> gv(N_MUL);
-    for (int i = 0; i < N_MUL; ++i) {
-        ga[i] = fmbench::adapters::to_glm(a[i]);
-        gb[i] = fmbench::adapters::to_glm(b[i]);
-        gv[i] = fmbench::adapters::to_glm(v[i]);
+    std::vector<glm::mat4> ga(n_mul), gb(n_mul);
+    std::vector<glm::vec4> gv(n_mul);
+    for (int i = 0; i < n_mul; ++i) {
+        ga[i] = FmBench::Adapters::toGlm(a[i]);
+        gb[i] = FmBench::Adapters::toGlm(b[i]);
+        gv[i] = FmBench::Adapters::toGlm(v[i]);
     }
 #endif
 
 #if FM_HAVE_EIGEN
-    std::vector<Eigen::Matrix4f> ea(N_MUL), eb(N_MUL);
-    std::vector<Eigen::Vector4f> ev(N_MUL);
-    for (int i = 0; i < N_MUL; ++i) {
-        ea[i] = fmbench::adapters::to_eigen(a[i]);
-        eb[i] = fmbench::adapters::to_eigen(b[i]);
-        ev[i] = fmbench::adapters::to_eigen(v[i]);
+    std::vector<Eigen::Matrix4f> ea(n_mul), eb(n_mul);
+    std::vector<Eigen::Vector4f> ev(n_mul);
+    for (int i = 0; i < n_mul; ++i) {
+        ea[i] = FmBench::Adapters::toEigen(a[i]);
+        eb[i] = FmBench::Adapters::toEigen(b[i]);
+        ev[i] = FmBench::Adapters::toEigen(v[i]);
     }
 #endif
 
 #if FM_HAVE_DIRECTXMATH
-    std::vector<DirectX::XMFLOAT4X4> da(N_MUL), db(N_MUL);
-    std::vector<DirectX::XMFLOAT4> dv(N_MUL);
-    for (int i = 0; i < N_MUL; ++i) {
+    std::vector<DirectX::XMFLOAT4X4> da(n_mul), db(n_mul);
+    std::vector<DirectX::XMFLOAT4> dv(n_mul);
+    for (int i = 0; i < n_mul; ++i) {
         // XMMatrix uses row-major constructors; benchmark only cares about throughput.
         for (int r = 0; r < 4; ++r) {
             for (int c = 0; c < 4; ++c) {
@@ -201,38 +201,38 @@ FM_BENCH(Matrix, Mat4MulMulVecTransposeInverse) {
     }
 #endif
 
-    fmbench::runComparisonCase(
+    FmBench::runComparisonCase(
         "mat4 mul + mulVec + transpose + inverse",
-        static_cast<std::size_t>(N_MUL * 3 + N_INV),
+        static_cast<std::size_t>(n_mul * 3 + n_inv),
         {
             {"fast_math", true, [&]() {
                  double acc = 0.0;
-                 for (int i = 0; i < N_MUL; ++i) {
+                 for (int i = 0; i < n_mul; ++i) {
                      auto m = MMath::mat4Multiply(a[i], b[i]);
                      auto tv = MMath::mat4MultiplyVec4(m, v[i]);
                      auto t = MMath::mat4Transpose(m);
                      acc += tv.x + tv.y + tv.z + tv.w + t.m[0] + t.m[5] + t.m[10] + t.m[15];
                  }
-                 for (int i = 0; i < N_INV; ++i) {
+                 for (int i = 0; i < n_inv; ++i) {
                      auto inv = MMath::mat4InverseChecked(a[i]);
                      acc += inv.value.m[0] + inv.value.m[5] + inv.value.m[10] + inv.value.m[15];
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #if FM_HAVE_GLM
             {"glm", true, [&]() {
                  double acc = 0.0;
-                 for (int i = 0; i < N_MUL; ++i) {
+                 for (int i = 0; i < n_mul; ++i) {
                      glm::mat4 m = ga[i] * gb[i];
                      glm::vec4 tv = m * gv[i];
                      glm::mat4 t = glm::transpose(m);
                      acc += tv.x + tv.y + tv.z + tv.w + t[0][0] + t[1][1] + t[2][2] + t[3][3];
                  }
-                 for (int i = 0; i < N_INV; ++i) {
+                 for (int i = 0; i < n_inv; ++i) {
                      glm::mat4 inv = glm::inverse(ga[i]);
                      acc += inv[0][0] + inv[1][1] + inv[2][2] + inv[3][3];
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"glm", false, {}},
@@ -240,17 +240,17 @@ FM_BENCH(Matrix, Mat4MulMulVecTransposeInverse) {
 #if FM_HAVE_EIGEN
             {"eigen", true, [&]() {
                  double acc = 0.0;
-                 for (int i = 0; i < N_MUL; ++i) {
+                 for (int i = 0; i < n_mul; ++i) {
                      Eigen::Matrix4f m = ea[i] * eb[i];
                      Eigen::Vector4f tv = m * ev[i];
                      Eigen::Matrix4f t = m.transpose();
                      acc += tv.x() + tv.y() + tv.z() + tv.w() + t(0, 0) + t(1, 1) + t(2, 2) + t(3, 3);
                  }
-                 for (int i = 0; i < N_INV; ++i) {
+                 for (int i = 0; i < n_inv; ++i) {
                      Eigen::Matrix4f inv = ea[i].inverse();
                      acc += inv(0, 0) + inv(1, 1) + inv(2, 2) + inv(3, 3);
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"eigen", false, {}},
@@ -259,7 +259,7 @@ FM_BENCH(Matrix, Mat4MulMulVecTransposeInverse) {
             {"directxmath", true, [&]() {
                  using namespace DirectX;
                  double acc = 0.0;
-                 for (int i = 0; i < N_MUL; ++i) {
+                 for (int i = 0; i < n_mul; ++i) {
                      XMMATRIX ma = XMLoadFloat4x4(&da[i]);
                      XMMATRIX mb = XMLoadFloat4x4(&db[i]);
                      XMMATRIX m = XMMatrixMultiply(ma, mb);
@@ -269,13 +269,13 @@ FM_BENCH(Matrix, Mat4MulMulVecTransposeInverse) {
                      acc += XMVectorGetX(tv) + XMVectorGetY(tv) + XMVectorGetZ(tv) + XMVectorGetW(tv);
                      acc += XMVectorGetX(t.r[0]) + XMVectorGetY(t.r[1]) + XMVectorGetZ(t.r[2]) + XMVectorGetW(t.r[3]);
                  }
-                 for (int i = 0; i < N_INV; ++i) {
+                 for (int i = 0; i < n_inv; ++i) {
                      XMMATRIX ma = XMLoadFloat4x4(&da[i]);
                      XMVECTOR det;
                      XMMATRIX inv = XMMatrixInverse(&det, ma);
                      acc += XMVectorGetX(inv.r[0]) + XMVectorGetY(inv.r[1]) + XMVectorGetZ(inv.r[2]) + XMVectorGetW(inv.r[3]);
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"directxmath", false, {}},
@@ -285,19 +285,19 @@ FM_BENCH(Matrix, Mat4MulMulVecTransposeInverse) {
 }
 
 FM_BENCH(Matrix, LookAtConstruction) {
-    constexpr int N = 4096;
+    constexpr int n = 4096;
     auto rng = makeRng();
 
-    std::vector<MMath::Vec4> eyes(N), targets(N), ups(N);
-    for (int i = 0; i < N; ++i) {
+    std::vector<MMath::Vec4> eyes(n), targets(n), ups(n);
+    for (int i = 0; i < n; ++i) {
         eyes[i] = MMath::Vec4{rng.uniform(-8.0f, 8.0f), rng.uniform(-8.0f, 8.0f), rng.uniform(2.0f, 15.0f), 1.0f};
         targets[i] = MMath::Vec4{rng.uniform(-1.0f, 1.0f), rng.uniform(-1.0f, 1.0f), rng.uniform(-1.0f, 1.0f), 1.0f};
         ups[i] = MMath::Vec4{0.0f, 1.0f, 0.0f, 0.0f};
     }
 
 #if FM_HAVE_GLM
-    std::vector<glm::vec3> geyes(N), gtargets(N), gups(N);
-    for (int i = 0; i < N; ++i) {
+    std::vector<glm::vec3> geyes(n), gtargets(n), gups(n);
+    for (int i = 0; i < n; ++i) {
         geyes[i] = glm::vec3(eyes[i].x, eyes[i].y, eyes[i].z);
         gtargets[i] = glm::vec3(targets[i].x, targets[i].y, targets[i].z);
         gups[i] = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -305,41 +305,41 @@ FM_BENCH(Matrix, LookAtConstruction) {
 #endif
 
 #if FM_HAVE_EIGEN
-    std::vector<Eigen::Vector3f> eeyes(N), etargets(N);
-    for (int i = 0; i < N; ++i) {
+    std::vector<Eigen::Vector3f> eeyes(n), etargets(n);
+    for (int i = 0; i < n; ++i) {
         eeyes[i] = Eigen::Vector3f(eyes[i].x, eyes[i].y, eyes[i].z);
         etargets[i] = Eigen::Vector3f(targets[i].x, targets[i].y, targets[i].z);
     }
 #endif
 
 #if FM_HAVE_DIRECTXMATH
-    std::vector<DirectX::XMFLOAT3> deyes(N), dtargets(N);
-    for (int i = 0; i < N; ++i) {
+    std::vector<DirectX::XMFLOAT3> deyes(n), dtargets(n);
+    for (int i = 0; i < n; ++i) {
         deyes[i] = DirectX::XMFLOAT3(eyes[i].x, eyes[i].y, eyes[i].z);
         dtargets[i] = DirectX::XMFLOAT3(targets[i].x, targets[i].y, targets[i].z);
     }
 #endif
 
-    fmbench::runComparisonCase(
+    FmBench::runComparisonCase(
         "lookAt construction",
-        static_cast<std::size_t>(N),
+        static_cast<std::size_t>(n),
         {
             {"fast_math", true, [&]() {
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      const MMath::Mat4 view = MMath::mat4LookAt(eyes[i], targets[i], ups[i]);
                      acc += view.m[0] + view.m[5] + view.m[10];
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #if FM_HAVE_GLM
             {"glm", true, [&]() {
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      const glm::mat4 view = glm::lookAt(geyes[i], gtargets[i], gups[i]);
                      acc += view[0][0] + view[1][1] + view[2][2];
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"glm", false, {}},
@@ -360,13 +360,13 @@ FM_BENCH(Matrix, LookAtConstruction) {
                      m(2, 3) = f.dot(eye);
                      return m;
                  };
-
+                
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      const Eigen::Matrix4f view = make_view(eeyes[i], etargets[i]);
                      acc += view(0, 0) + view(1, 1) + view(2, 2);
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"eigen", false, {}},
@@ -375,14 +375,14 @@ FM_BENCH(Matrix, LookAtConstruction) {
             {"directxmath", true, [&]() {
                  using namespace DirectX;
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      const XMVECTOR eye = XMLoadFloat3(&deyes[i]);
                      const XMVECTOR target = XMLoadFloat3(&dtargets[i]);
                      const XMVECTOR up = XMVectorSet(0.f, 1.f, 0.f, 0.f);
                      const XMMATRIX view = XMMatrixLookAtRH(eye, target, up);
                      acc += XMVectorGetX(view.r[0]) + XMVectorGetY(view.r[1]) + XMVectorGetZ(view.r[2]);
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"directxmath", false, {}},
@@ -392,37 +392,37 @@ FM_BENCH(Matrix, LookAtConstruction) {
 }
 
 FM_BENCH(Matrix, PerspectiveConstruction) {
-    constexpr int N = 4096;
+    constexpr int n = 4096;
     auto rng = makeRng();
 
-    std::vector<float> fovy(N), aspect(N), near_z(N), far_z(N);
-    for (int i = 0; i < N; ++i) {
+    std::vector<float> fovy(n), aspect(n), near_z(n), far_z(n);
+    for (int i = 0; i < n; ++i) {
         fovy[i] = rng.uniform(0.7f, 1.6f);
         aspect[i] = rng.uniform(1.2f, 2.4f);
         near_z[i] = rng.uniform(0.05f, 0.5f);
         far_z[i] = near_z[i] + rng.uniform(100.0f, 1500.0f);
     }
 
-    fmbench::runComparisonCase(
+    FmBench::runComparisonCase(
         "perspective construction",
-        static_cast<std::size_t>(N),
+        static_cast<std::size_t>(n),
         {
             {"fast_math", true, [&]() {
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      const MMath::Mat4 proj = MMath::mat4Perspective(fovy[i], aspect[i], near_z[i], far_z[i]);
                      acc += proj.m[0] + proj.m[5] + proj.m[10];
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #if FM_HAVE_GLM
             {"glm", true, [&]() {
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      const glm::mat4 proj = glm::perspectiveRH_ZO(fovy[i], aspect[i], near_z[i], far_z[i]);
                      acc += proj[0][0] + proj[1][1] + proj[2][2];
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"glm", false, {}},
@@ -442,11 +442,11 @@ FM_BENCH(Matrix, PerspectiveConstruction) {
                  };
 
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      const Eigen::Matrix4f proj = make_proj(fovy[i], aspect[i], near_z[i], far_z[i]);
                      acc += proj(0, 0) + proj(1, 1) + proj(2, 2);
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"eigen", false, {}},
@@ -455,11 +455,11 @@ FM_BENCH(Matrix, PerspectiveConstruction) {
             {"directxmath", true, [&]() {
                  using namespace DirectX;
                  double acc = 0.0;
-                 for (int i = 0; i < N; ++i) {
+                 for (int i = 0; i < n; ++i) {
                      const XMMATRIX proj = XMMatrixPerspectiveFovRH(fovy[i], aspect[i], near_z[i], far_z[i]);
                      acc += XMVectorGetX(proj.r[0]) + XMVectorGetY(proj.r[1]) + XMVectorGetZ(proj.r[2]);
                  }
-                 fmbench::consume(acc);
+                 FmBench::consume(acc);
              }},
 #else
             {"directxmath", false, {}},

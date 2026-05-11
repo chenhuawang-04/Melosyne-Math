@@ -14,14 +14,14 @@
 #include <string>
 #include <vector>
 
-namespace fmtest {
+namespace FmTest {
 
 class Rng {
 public:
-    explicit Rng(uint32_t seed = 0xC0FFEEU) : eng(seed) {}
+    explicit Rng(uint32_t seed_ = 0xC0FFEEU) : eng(seed_) {}
 
-    float uniform(float lo, float hi) {
-        std::uniform_real_distribution<float> dist(lo, hi);
+    float uniform(float lo_, float hi_) {
+        std::uniform_real_distribution<float> dist(lo_, hi_);
         return dist(eng);
     }
 
@@ -55,15 +55,15 @@ inline void requireVec2Near(
     const MMath::Vec2& actual_,
     const MMath::Vec2& expected_,
     float eps_,
-    const char* actual_expr,
-    const char* expected_expr,
-    const char* file,
-    int line) {
+    const char* actual_expr_,
+    const char* expected_expr_,
+    const char* file_,
+    int line_) {
     if (!nearAbs(actual_.x, expected_.x, eps_) || !nearAbs(actual_.y, expected_.y, eps_)) {
         std::ostringstream oss;
-        oss << actual_expr << " = (" << actual_.x << ", " << actual_.y << "), "
-            << expected_expr << " = (" << expected_.x << ", " << expected_.y << "), eps=" << eps_;
-        fail("Vec2 near", oss.str(), file, line);
+        oss << actual_expr_ << " = (" << actual_.x << ", " << actual_.y << "), "
+            << expected_expr_ << " = (" << expected_.x << ", " << expected_.y << "), eps=" << eps_;
+        fail("Vec2 near", oss.str(), file_, line_);
     }
 }
 
@@ -71,17 +71,17 @@ inline void requireVec3Near(
     const MMath::Vec3& actual_,
     const MMath::Vec3& expected_,
     float eps_,
-    const char* actual_expr,
-    const char* expected_expr,
-    const char* file,
-    int line) {
+    const char* actual_expr_,
+    const char* expected_expr_,
+    const char* file_,
+    int line_) {
     if (!nearAbs(actual_.x, expected_.x, eps_) || !nearAbs(actual_.y, expected_.y, eps_) ||
         !nearAbs(actual_.z, expected_.z, eps_)) {
         std::ostringstream oss;
-        oss << actual_expr << " = (" << actual_.x << ", " << actual_.y << ", " << actual_.z << "), "
-            << expected_expr << " = (" << expected_.x << ", " << expected_.y << ", " << expected_.z << "), eps="
+        oss << actual_expr_ << " = (" << actual_.x << ", " << actual_.y << ", " << actual_.z << "), "
+            << expected_expr_ << " = (" << expected_.x << ", " << expected_.y << ", " << expected_.z << "), eps="
             << eps_;
-        fail("Vec3 near", oss.str(), file, line);
+        fail("Vec3 near", oss.str(), file_, line_);
     }
 }
 
@@ -89,17 +89,17 @@ inline void requireVec4Near(
     const MMath::Vec4& actual_,
     const MMath::Vec4& expected_,
     float eps_,
-    const char* actual_expr,
-    const char* expected_expr,
-    const char* file,
-    int line) {
+    const char* actual_expr_,
+    const char* expected_expr_,
+    const char* file_,
+    int line_) {
     if (!nearAbs(actual_.x, expected_.x, eps_) || !nearAbs(actual_.y, expected_.y, eps_) ||
         !nearAbs(actual_.z, expected_.z, eps_) || !nearAbs(actual_.w, expected_.w, eps_)) {
         std::ostringstream oss;
-        oss << actual_expr << " = (" << actual_.x << ", " << actual_.y << ", " << actual_.z << ", " << actual_.w
-            << "), " << expected_expr << " = (" << expected_.x << ", " << expected_.y << ", " << expected_.z
+        oss << actual_expr_ << " = (" << actual_.x << ", " << actual_.y << ", " << actual_.z << ", " << actual_.w
+            << "), " << expected_expr_ << " = (" << expected_.x << ", " << expected_.y << ", " << expected_.z
             << ", " << expected_.w << "), eps=" << eps_;
-        fail("Vec4 near", oss.str(), file, line);
+        fail("Vec4 near", oss.str(), file_, line_);
     }
 }
 
@@ -107,10 +107,10 @@ inline void requireMat3Near(
     const MMath::Mat3& actual_,
     const MMath::Mat3& expected_,
     float eps_,
-    const char* actual_expr,
-    const char* expected_expr,
-    const char* file,
-    int line) {
+    const char* actual_expr_,
+    const char* expected_expr_,
+    const char* file_,
+    int line_) {
     const float a[9] = {
         actual_.m00, actual_.m01, actual_.m02, actual_.m10, actual_.m11,
         actual_.m12, actual_.m20, actual_.m21, actual_.m22,
@@ -122,9 +122,9 @@ inline void requireMat3Near(
     for (int i = 0; i < 9; ++i) {
         if (!nearAbs(a[i], e[i], eps_)) {
             std::ostringstream oss;
-            oss << actual_expr << " differs from " << expected_expr << " at index " << i
+            oss << actual_expr_ << " differs from " << expected_expr_ << " at index " << i
                 << ": actual=" << a[i] << ", expected=" << e[i] << ", eps=" << eps_;
-            fail("Mat3 near", oss.str(), file, line);
+            fail("Mat3 near", oss.str(), file_, line_);
         }
     }
 }
@@ -133,17 +133,17 @@ inline void requireMat4Near(
     const MMath::Mat4& actual_,
     const MMath::Mat4& expected_,
     float eps_,
-    const char* actual_expr,
-    const char* expected_expr,
-    const char* file,
-    int line) {
+    const char* actual_expr_,
+    const char* expected_expr_,
+    const char* file_,
+    int line_) {
     for (int i = 0; i < 16; ++i) {
         if (!nearAbs(actual_.m[i], expected_.m[i], eps_)) {
             std::ostringstream oss;
-            oss << actual_expr << " differs from " << expected_expr << " at m[" << i
+            oss << actual_expr_ << " differs from " << expected_expr_ << " at m[" << i
                 << "]: actual=" << actual_.m[i] << ", expected=" << expected_.m[i]
                 << ", eps=" << eps_;
-            fail("Mat4 near", oss.str(), file, line);
+            fail("Mat4 near", oss.str(), file_, line_);
         }
     }
 }
@@ -164,19 +164,19 @@ inline MMath::Mat4 randomMat4(Rng& rng_, float lo_ = -2.0f, float hi_ = 2.0f) {
     return m;
 }
 
-} // namespace fmtest
+} // namespace FmTest
 
 #define FM_REQUIRE_VEC2_NEAR(ACTUAL, EXPECTED, EPS)                                           \
-    ::fmtest::requireVec2Near((ACTUAL), (EXPECTED), (EPS), #ACTUAL, #EXPECTED, __FILE__, __LINE__)
+    ::FmTest::requireVec2Near((ACTUAL), (EXPECTED), (EPS), #ACTUAL, #EXPECTED, __FILE__, __LINE__)
 
 #define FM_REQUIRE_VEC3_NEAR(ACTUAL, EXPECTED, EPS)                                           \
-    ::fmtest::requireVec3Near((ACTUAL), (EXPECTED), (EPS), #ACTUAL, #EXPECTED, __FILE__, __LINE__)
+    ::FmTest::requireVec3Near((ACTUAL), (EXPECTED), (EPS), #ACTUAL, #EXPECTED, __FILE__, __LINE__)
 
 #define FM_REQUIRE_VEC4_NEAR(ACTUAL, EXPECTED, EPS)                                           \
-    ::fmtest::requireVec4Near((ACTUAL), (EXPECTED), (EPS), #ACTUAL, #EXPECTED, __FILE__, __LINE__)
+    ::FmTest::requireVec4Near((ACTUAL), (EXPECTED), (EPS), #ACTUAL, #EXPECTED, __FILE__, __LINE__)
 
 #define FM_REQUIRE_MAT3_NEAR(ACTUAL, EXPECTED, EPS)                                           \
-    ::fmtest::requireMat3Near((ACTUAL), (EXPECTED), (EPS), #ACTUAL, #EXPECTED, __FILE__, __LINE__)
+    ::FmTest::requireMat3Near((ACTUAL), (EXPECTED), (EPS), #ACTUAL, #EXPECTED, __FILE__, __LINE__)
 
 #define FM_REQUIRE_MAT4_NEAR(ACTUAL, EXPECTED, EPS)                                           \
-    ::fmtest::requireMat4Near((ACTUAL), (EXPECTED), (EPS), #ACTUAL, #EXPECTED, __FILE__, __LINE__)
+    ::FmTest::requireMat4Near((ACTUAL), (EXPECTED), (EPS), #ACTUAL, #EXPECTED, __FILE__, __LINE__)

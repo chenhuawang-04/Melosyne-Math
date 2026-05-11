@@ -8,7 +8,7 @@
 #include <string_view>
 #include <vector>
 
-namespace fmtest {
+namespace FmTest {
 
 using TestFn = void (*)();
 
@@ -38,7 +38,7 @@ public:
 class Registry {
 public:
     static Registry& instance();
-    bool add(std::string suite, std::string name, TestFn fn);
+    bool add(std::string suite_, std::string name_, TestFn fn_);
     const std::vector<TestCase>& tests() const noexcept;
 
 private:
@@ -49,10 +49,10 @@ bool registerTest(const char* suite_, const char* name_, TestFn fn_);
 RunSummary runAllTests(const RunOptions& options_ = {});
 
 [[noreturn]] void fail(
-    const char* expr,
-    const std::string& detail,
-    const char* file,
-    int line);
+    const char* expr_,
+    const std::string& detail_,
+    const char* file_,
+    int line_);
 
 void requireTrue(bool condition_, const char* expr_, const char* file_, int line_);
 void requireNear(
@@ -85,7 +85,7 @@ void requireEq(
     const char* file_,
     int line_);
 
-} // namespace fmtest
+} // namespace FmTest
 
 #define FM_CONCAT_INNER(a, b) a##b
 #define FM_CONCAT(a, b) FM_CONCAT_INNER(a, b)
@@ -94,15 +94,15 @@ void requireEq(
     static void FM_CONCAT(fm_test_fn_, __LINE__)();                                           \
     namespace {                                                                                \
     const bool FM_CONCAT(fm_test_reg_, __LINE__) =                                            \
-        ::fmtest::registerTest(#SUITE, #NAME, &FM_CONCAT(fm_test_fn_, __LINE__));             \
+        ::FmTest::registerTest(#SUITE, #NAME, &FM_CONCAT(fm_test_fn_, __LINE__));             \
     }                                                                                          \
     static void FM_CONCAT(fm_test_fn_, __LINE__)()
 
 #define FM_REQUIRE(EXPR)                                                                       \
-    ::fmtest::requireTrue((EXPR), #EXPR, __FILE__, __LINE__)
+    ::FmTest::requireTrue((EXPR), #EXPR, __FILE__, __LINE__)
 
 #define FM_REQUIRE_NEAR(ACTUAL, EXPECTED, EPS)                                                 \
-    ::fmtest::requireNear(                                                                     \
+    ::FmTest::requireNear(                                                                     \
         static_cast<double>(ACTUAL),                                                           \
         static_cast<double>(EXPECTED),                                                         \
         static_cast<double>(EPS),                                                              \
@@ -112,10 +112,10 @@ void requireEq(
         __LINE__)
 
 #define FM_REQUIRE_EQ_STR(ACTUAL, EXPECTED)                                                    \
-    ::fmtest::requireEq((ACTUAL), (EXPECTED), #ACTUAL, #EXPECTED, __FILE__, __LINE__)
+    ::FmTest::requireEq((ACTUAL), (EXPECTED), #ACTUAL, #EXPECTED, __FILE__, __LINE__)
 
 #define FM_REQUIRE_EQ_I64(ACTUAL, EXPECTED)                                                    \
-    ::fmtest::requireEq(                                                                       \
+    ::FmTest::requireEq(                                                                       \
         static_cast<long long>(ACTUAL),                                                        \
         static_cast<long long>(EXPECTED),                                                      \
         #ACTUAL,                                                                               \
@@ -124,7 +124,7 @@ void requireEq(
         __LINE__)
 
 #define FM_REQUIRE_EQ_U64(ACTUAL, EXPECTED)                                                    \
-    ::fmtest::requireEq(                                                                       \
+    ::FmTest::requireEq(                                                                       \
         static_cast<unsigned long long>(ACTUAL),                                               \
         static_cast<unsigned long long>(EXPECTED),                                             \
         #ACTUAL,                                                                               \

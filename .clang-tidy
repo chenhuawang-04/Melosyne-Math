@@ -4,7 +4,7 @@ Checks: >
 
 # Diagnose all core library code (public + internal detail headers) as part of the
 # naming contract for this repository.
-HeaderFilterRegex: '(include/fast_math/.*)|(modules/fast_math/.*)'
+HeaderFilterRegex: '(include/fast_math/.*)|(modules/fast_math/.*)|(test/.*)|(bench/.*)'
 
 # Treat naming violations as errors so CI can enforce the style contract.
 WarningsAsErrors: >

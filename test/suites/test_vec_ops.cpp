@@ -10,7 +10,7 @@
 #include <vector>
 
 FM_TEST(Vec2, ScalarAndArrayOps) {
-    fmtest::Rng rng(0x42424242U);
+    FmTest::Rng rng(0x42424242U);
 
     for (int i = 0; i < 4000; ++i) {
         MMath::Vec2 a{rng.uniform(-10.0f, 10.0f), rng.uniform(-10.0f, 10.0f)};
@@ -60,11 +60,11 @@ FM_TEST(Vec2, ScalarAndArrayOps) {
 }
 
 FM_TEST(Vec3, GeometryInvariants) {
-    fmtest::Rng rng(0xF00DFACEU);
+    FmTest::Rng rng(0xF00DFACEU);
 
     for (int i = 0; i < 6000; ++i) {
-        const MMath::Vec3 a = fmtest::randomVec3(rng, -10.0f, 10.0f);
-        const MMath::Vec3 b = fmtest::randomVec3(rng, -10.0f, 10.0f);
+        const MMath::Vec3 a = FmTest::randomVec3(rng, -10.0f, 10.0f);
+        const MMath::Vec3 b = FmTest::randomVec3(rng, -10.0f, 10.0f);
 
         const MMath::Vec3 c = MMath::vec3Cross(a, b);
         FM_REQUIRE_NEAR(MMath::vec3Dot(c, a), 0.0f, 3e-3f);
@@ -95,15 +95,15 @@ FM_TEST(Vec3, GeometryInvariants) {
 }
 
 FM_TEST(Vec3, BatchSimdConsistency) {
-    fmtest::Rng rng(0x1BADB002U);
+    FmTest::Rng rng(0x1BADB002U);
 
     for (int n : {1, 3, 4, 7, 16, 31, 64, 129}) {
         std::vector<MMath::Vec3> a(n), b(n), out(n), ref(n);
         std::vector<float> out_f(n), ref_f(n);
 
         for (int i = 0; i < n; ++i) {
-            a[i] = fmtest::randomVec3(rng, -4.0f, 4.0f);
-            b[i] = fmtest::randomVec3(rng, -4.0f, 4.0f);
+            a[i] = FmTest::randomVec3(rng, -4.0f, 4.0f);
+            b[i] = FmTest::randomVec3(rng, -4.0f, 4.0f);
         }
 
         MMath::vec3AddBatchSimd(a.data(), b.data(), out.data(), n);
@@ -125,7 +125,7 @@ FM_TEST(Vec3, BatchSimdConsistency) {
         }
 
         for (int i = 0; i < n; ++i) {
-            a[i] = fmtest::randomVec3(rng, 0.1f, 2.0f);
+            a[i] = FmTest::randomVec3(rng, 0.1f, 2.0f);
         }
         MMath::vec3ScaleBatchSimd(a.data(), 1.75f, out.data(), n);
         for (int i = 0; i < n; ++i) {
@@ -136,11 +136,11 @@ FM_TEST(Vec3, BatchSimdConsistency) {
 }
 
 FM_TEST(Vec4, CoreOpsAndNormalization) {
-    fmtest::Rng rng(0x10203040U);
+    FmTest::Rng rng(0x10203040U);
 
     for (int i = 0; i < 5000; ++i) {
-        const MMath::Vec4 a = fmtest::randomVec4(rng, -8.0f, 8.0f);
-        const MMath::Vec4 b = fmtest::randomVec4(rng, -8.0f, 8.0f);
+        const MMath::Vec4 a = FmTest::randomVec4(rng, -8.0f, 8.0f);
+        const MMath::Vec4 b = FmTest::randomVec4(rng, -8.0f, 8.0f);
 
         FM_REQUIRE_VEC4_NEAR(
             MMath::vec4Add(a, b),

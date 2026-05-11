@@ -4,8 +4,8 @@ int moduleParitySmoke();
 
 int main() {
     using namespace MMath;
-    auto abs_diff = [](float a, float b) {
-        float d = a - b;
+    auto abs_diff = [](float a_, float b_) {
+        float d = a_ - b_;
         return d < 0.0f ? -d : d;
     };
 
