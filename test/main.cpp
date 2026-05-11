@@ -20,6 +20,6 @@ int main(int argc, char** argv) {
         }
     }
 
-    const fmtest::RunSummary summary = fmtest::run_all_tests(options);
+    const fmtest::RunSummary summary = fmtest::runAllTests(options);
     return summary.failed == 0 ? 0 : 1;
 }

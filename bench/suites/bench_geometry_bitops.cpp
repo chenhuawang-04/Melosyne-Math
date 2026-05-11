@@ -29,23 +29,23 @@ struct Aabb3Ref {
     float minx, miny, minz, maxx, maxy, maxz;
 };
 
-inline void transform_point_scalar_ref(
-    const MMath::Mat4& m,
-    float x,
-    float y,
-    float z,
-    float& out_x,
-    float& out_y,
-    float& out_z) noexcept {
-    out_x = m.m[0] * x + m.m[4] * y + m.m[8] * z + m.m[12];
-    out_y = m.m[1] * x + m.m[5] * y + m.m[9] * z + m.m[13];
-    out_z = m.m[2] * x + m.m[6] * y + m.m[10] * z + m.m[14];
+inline void transformPointScalarRef(
+    const MMath::Mat4& m_,
+    float x_,
+    float y_,
+    float z_,
+    float& out_x_,
+    float& out_y_,
+    float& out_z_) noexcept {
+    out_x_ = m_.m[0] * x_ + m_.m[4] * y_ + m_.m[8] * z_ + m_.m[12];
+    out_y_ = m_.m[1] * x_ + m_.m[5] * y_ + m_.m[9] * z_ + m_.m[13];
+    out_z_ = m_.m[2] * x_ + m_.m[6] * y_ + m_.m[10] * z_ + m_.m[14];
 }
 
-Aabb3Ref transform_aabb3_scalar_ref(const Aabb3Ref& box, const MMath::Mat4& m) noexcept {
-    const float xs[2] = {box.minx, box.maxx};
-    const float ys[2] = {box.miny, box.maxy};
-    const float zs[2] = {box.minz, box.maxz};
+Aabb3Ref transformAabb3ScalarRef(const Aabb3Ref& box_, const MMath::Mat4& m_) noexcept {
+    const float xs[2] = {box_.minx, box_.maxx};
+    const float ys[2] = {box_.miny, box_.maxy};
+    const float zs[2] = {box_.minz, box_.maxz};
 
     Aabb3Ref out{};
     bool first = true;
@@ -54,7 +54,7 @@ Aabb3Ref transform_aabb3_scalar_ref(const Aabb3Ref& box, const MMath::Mat4& m) n
         for (float y : ys) {
             for (float z : zs) {
                 float tx = 0.0f, ty = 0.0f, tz = 0.0f;
-                transform_point_scalar_ref(m, x, y, z, tx, ty, tz);
+                transformPointScalarRef(m_, x, y, z, tx, ty, tz);
                 if (first) {
                     out = Aabb3Ref{tx, ty, tz, tx, ty, tz};
                     first = false;
@@ -93,7 +93,7 @@ FM_BENCH(Geometry, Aabb2ContainsMerge) {
         refs[i] = Aabb2Ref{x0, y0, x1, y1};
     }
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "aabb2 contains + merge",
         static_cast<std::size_t>(N * 2),
         {
@@ -194,7 +194,7 @@ FM_BENCH(Geometry, Aabb2ContainsOnly) {
         refs[i] = Aabb2Ref{x0, y0, x1, y1};
     }
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "aabb2 contains only",
         static_cast<std::size_t>(N),
         {
@@ -273,7 +273,7 @@ FM_BENCH(Geometry, Aabb2MergeOnly) {
         refs[i] = Aabb2Ref{x0, y0, x1, y1};
     }
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "aabb2 merge only",
         static_cast<std::size_t>(N),
         {
@@ -358,7 +358,7 @@ FM_BENCH(Geometry, Aabb3OverlapTransform) {
         rb[i] = Aabb3Ref{bx0, by0, bz0, bx1, by1, bz1};
     }
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "aabb3 overlap + transform",
         static_cast<std::size_t>(N * 2),
         {
@@ -379,7 +379,7 @@ FM_BENCH(Geometry, Aabb3OverlapTransform) {
                                             ra[i].maxz < rb[i].minz || rb[i].maxz < ra[i].minz);
                      acc += overlap ? 1.0 : 0.0;
 
-                     const Aabb3Ref ta = transform_aabb3_scalar_ref(ra[i], tr[i]);
+                     const Aabb3Ref ta = transformAabb3ScalarRef(ra[i], tr[i]);
                      const float w = ta.maxx - ta.minx;
                      const float h = ta.maxy - ta.miny;
                      const float d = ta.maxz - ta.minz;
@@ -402,7 +402,7 @@ FM_BENCH(BitOps, ThroughputScalarVsOptimized) {
     for (int i = 0; i < N; i += 3) set(a, i);
     for (int i = 0; i < N; i += 5) set(b, i);
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "bitset and+count+rank kernel",
         static_cast<std::size_t>(ROUNDS * 3),
         {

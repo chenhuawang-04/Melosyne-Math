@@ -8,8 +8,8 @@
 
 namespace {
 
-float ndc_depth(const MMath::Vec4& clip) {
-    return clip.z / clip.w;
+float ndcDepth(const MMath::Vec4& clip_) {
+    return clip_.z / clip_.w;
 }
 
 } // namespace
@@ -93,7 +93,7 @@ FM_TEST(Mat4, CoreAlgebraAndTransforms) {
     FM_REQUIRE_MAT4_NEAR(MMath::mat4Multiply(id, id), id, 1e-6f);
 
     for (int i = 0; i < 2000; ++i) {
-        MMath::Vec4 v = fmtest::random_vec4(rng, -5.0f, 5.0f);
+        MMath::Vec4 v = fmtest::randomVec4(rng, -5.0f, 5.0f);
         MMath::Mat4 t = MMath::mat4Translation(
             rng.uniform(-4.0f, 4.0f),
             rng.uniform(-4.0f, 4.0f),
@@ -171,28 +171,28 @@ FM_TEST(Mat4, SingularInverseReportsFailure) {
 }
 
 FM_TEST(Mat4, DepthRangeMappingZeroToOne) {
-    constexpr float kNear = 0.1f;
-    constexpr float kFar = 100.0f;
-    constexpr float kFovY = 3.1415926f / 3.0f;
-    constexpr float kAspect = 16.0f / 9.0f;
+    constexpr float k_near = 0.1f;
+    constexpr float k_far = 100.0f;
+    constexpr float k_fov_y = 3.1415926f / 3.0f;
+    constexpr float k_aspect = 16.0f / 9.0f;
 
-    const MMath::Mat4 proj_rh = MMath::mat4PerspectiveRH(kFovY, kAspect, kNear, kFar);
-    const MMath::Mat4 proj_lh = MMath::mat4PerspectiveLH(kFovY, kAspect, kNear, kFar);
+    const MMath::Mat4 proj_rh = MMath::mat4PerspectiveRH(k_fov_y, k_aspect, k_near, k_far);
+    const MMath::Mat4 proj_lh = MMath::mat4PerspectiveLH(k_fov_y, k_aspect, k_near, k_far);
 
-    const MMath::Vec4 rh_near_view{0.0f, 0.0f, -kNear, 1.0f};
-    const MMath::Vec4 rh_far_view{0.0f, 0.0f, -kFar, 1.0f};
-    const MMath::Vec4 lh_near_view{0.0f, 0.0f, kNear, 1.0f};
-    const MMath::Vec4 lh_far_view{0.0f, 0.0f, kFar, 1.0f};
+    const MMath::Vec4 rh_near_view{0.0f, 0.0f, -k_near, 1.0f};
+    const MMath::Vec4 rh_far_view{0.0f, 0.0f, -k_far, 1.0f};
+    const MMath::Vec4 lh_near_view{0.0f, 0.0f, k_near, 1.0f};
+    const MMath::Vec4 lh_far_view{0.0f, 0.0f, k_far, 1.0f};
 
-    FM_REQUIRE_NEAR(ndc_depth(MMath::mat4MultiplyVec4(proj_rh, rh_near_view)), 0.0f, 1e-4f);
-    FM_REQUIRE_NEAR(ndc_depth(MMath::mat4MultiplyVec4(proj_rh, rh_far_view)), 1.0f, 1e-4f);
-    FM_REQUIRE_NEAR(ndc_depth(MMath::mat4MultiplyVec4(proj_lh, lh_near_view)), 0.0f, 1e-4f);
-    FM_REQUIRE_NEAR(ndc_depth(MMath::mat4MultiplyVec4(proj_lh, lh_far_view)), 1.0f, 1e-4f);
+    FM_REQUIRE_NEAR(ndcDepth(MMath::mat4MultiplyVec4(proj_rh, rh_near_view)), 0.0f, 1e-4f);
+    FM_REQUIRE_NEAR(ndcDepth(MMath::mat4MultiplyVec4(proj_rh, rh_far_view)), 1.0f, 1e-4f);
+    FM_REQUIRE_NEAR(ndcDepth(MMath::mat4MultiplyVec4(proj_lh, lh_near_view)), 0.0f, 1e-4f);
+    FM_REQUIRE_NEAR(ndcDepth(MMath::mat4MultiplyVec4(proj_lh, lh_far_view)), 1.0f, 1e-4f);
 
-    const MMath::Mat4 ortho_rh = MMath::mat4OrthoRH(-2.0f, 2.0f, -1.0f, 1.0f, kNear, kFar);
-    const MMath::Mat4 ortho_lh = MMath::mat4OrthoLH(-2.0f, 2.0f, -1.0f, 1.0f, kNear, kFar);
-    FM_REQUIRE_NEAR(ndc_depth(MMath::mat4MultiplyVec4(ortho_rh, rh_near_view)), 0.0f, 1e-5f);
-    FM_REQUIRE_NEAR(ndc_depth(MMath::mat4MultiplyVec4(ortho_rh, rh_far_view)), 1.0f, 1e-5f);
-    FM_REQUIRE_NEAR(ndc_depth(MMath::mat4MultiplyVec4(ortho_lh, lh_near_view)), 0.0f, 1e-5f);
-    FM_REQUIRE_NEAR(ndc_depth(MMath::mat4MultiplyVec4(ortho_lh, lh_far_view)), 1.0f, 1e-5f);
+    const MMath::Mat4 ortho_rh = MMath::mat4OrthoRH(-2.0f, 2.0f, -1.0f, 1.0f, k_near, k_far);
+    const MMath::Mat4 ortho_lh = MMath::mat4OrthoLH(-2.0f, 2.0f, -1.0f, 1.0f, k_near, k_far);
+    FM_REQUIRE_NEAR(ndcDepth(MMath::mat4MultiplyVec4(ortho_rh, rh_near_view)), 0.0f, 1e-5f);
+    FM_REQUIRE_NEAR(ndcDepth(MMath::mat4MultiplyVec4(ortho_rh, rh_far_view)), 1.0f, 1e-5f);
+    FM_REQUIRE_NEAR(ndcDepth(MMath::mat4MultiplyVec4(ortho_lh, lh_near_view)), 0.0f, 1e-5f);
+    FM_REQUIRE_NEAR(ndcDepth(MMath::mat4MultiplyVec4(ortho_lh, lh_far_view)), 1.0f, 1e-5f);
 }

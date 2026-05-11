@@ -380,13 +380,13 @@ public:
         using pointer = const std::size_t*;
         using reference = std::size_t;
 
-        iterator(ConstBitSetView view, std::size_t pos) noexcept
-            : view_(view), pos_(pos) {}
+        iterator(ConstBitSetView view_, std::size_t pos_) noexcept
+            : view(view_), pos(pos_) {}
 
-        reference operator*() const noexcept { return pos_; }
+        reference operator*() const noexcept { return pos; }
 
         iterator& operator++() noexcept {
-            pos_ = findNext(view_, pos_);
+            pos = findNext(view, pos);
             return *this;
         }
 
@@ -397,29 +397,29 @@ public:
         }
 
         bool operator==(const iterator& other) const noexcept {
-            return pos_ == other.pos_;
+            return pos == other.pos;
         }
 
         bool operator!=(const iterator& other) const noexcept {
-            return pos_ != other.pos_;
+            return pos != other.pos;
         }
 
     private:
-        ConstBitSetView view_;
-        std::size_t pos_;
+        ConstBitSetView view;
+        std::size_t pos;
     };
 
-    explicit BitPositionIterator(ConstBitSetView view) noexcept
-        : view_(view) {}
+    explicit BitPositionIterator(ConstBitSetView view_) noexcept
+        : view(view_) {}
 
     iterator begin() const noexcept {
-        return iterator(view_, findFirst(view_));
+        return iterator(view, findFirst(view));
     }
 
     iterator end() const noexcept {
-        return iterator(view_, view_.bit_count);
+        return iterator(view, view.bit_count);
     }
 
 private:
-    ConstBitSetView view_;
+    ConstBitSetView view;
 };

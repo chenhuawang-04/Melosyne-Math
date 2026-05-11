@@ -13,48 +13,48 @@ namespace {
 
 class Rng {
 public:
-    explicit Rng(uint32_t seed) : eng_(seed) {}
-    float uniform(float lo, float hi) {
-        std::uniform_real_distribution<float> dist(lo, hi);
-        return dist(eng_);
+    explicit Rng(uint32_t seed_) : eng(seed_) {}
+    float uniform(float lo_, float hi_) {
+        std::uniform_real_distribution<float> dist(lo_, hi_);
+        return dist(eng);
     }
 
 private:
-    std::mt19937 eng_;
+    std::mt19937 eng;
 };
 
-Rng make_rng() {
+Rng makeRng() {
     return Rng(0x2468ACE0U);
 }
 
-std::vector<MMath::Vec3> make_vec3_data(int n, Rng& rng) {
-    std::vector<MMath::Vec3> out(n);
+std::vector<MMath::Vec3> makeVec3Data(int n_, Rng& rng_) {
+    std::vector<MMath::Vec3> out(n_);
     for (auto& v : out) {
-        v = MMath::Vec3{rng.uniform(-10.0f, 10.0f), rng.uniform(-10.0f, 10.0f), rng.uniform(-10.0f, 10.0f)};
+        v = MMath::Vec3{rng_.uniform(-10.0f, 10.0f), rng_.uniform(-10.0f, 10.0f), rng_.uniform(-10.0f, 10.0f)};
     }
     return out;
 }
 
-std::vector<MMath::Vec4> make_vec4_data(int n, Rng& rng) {
-    std::vector<MMath::Vec4> out(n);
+std::vector<MMath::Vec4> makeVec4Data(int n_, Rng& rng_) {
+    std::vector<MMath::Vec4> out(n_);
     for (auto& v : out) {
         v = MMath::Vec4{
-            rng.uniform(-10.0f, 10.0f),
-            rng.uniform(-10.0f, 10.0f),
-            rng.uniform(-10.0f, 10.0f),
-            rng.uniform(-10.0f, 10.0f)};
+            rng_.uniform(-10.0f, 10.0f),
+            rng_.uniform(-10.0f, 10.0f),
+            rng_.uniform(-10.0f, 10.0f),
+            rng_.uniform(-10.0f, 10.0f)};
     }
     return out;
 }
 
-std::vector<MMath::Mat4> make_mat4_data(int n, Rng& rng) {
-    std::vector<MMath::Mat4> out(n);
+std::vector<MMath::Mat4> makeMat4Data(int n_, Rng& rng_) {
+    std::vector<MMath::Mat4> out(n_);
     for (auto& m : out) {
         m = MMath::mat4Multiply(
-            MMath::mat4Translation(rng.uniform(-5.0f, 5.0f), rng.uniform(-5.0f, 5.0f), rng.uniform(-5.0f, 5.0f)),
+            MMath::mat4Translation(rng_.uniform(-5.0f, 5.0f), rng_.uniform(-5.0f, 5.0f), rng_.uniform(-5.0f, 5.0f)),
             MMath::mat4Multiply(
-                MMath::mat4RotationX(rng.uniform(-3.14f, 3.14f)),
-                MMath::mat4Scale(rng.uniform(0.7f, 1.8f), rng.uniform(0.7f, 1.8f), rng.uniform(0.7f, 1.8f))));
+                MMath::mat4RotationX(rng_.uniform(-3.14f, 3.14f)),
+                MMath::mat4Scale(rng_.uniform(0.7f, 1.8f), rng_.uniform(0.7f, 1.8f), rng_.uniform(0.7f, 1.8f))));
     }
     return out;
 }
@@ -63,10 +63,10 @@ std::vector<MMath::Mat4> make_mat4_data(int n, Rng& rng) {
 
 FM_BENCH(Vector, Vec3DotCrossNormalize) {
     constexpr int N = 16384;
-    auto rng = make_rng();
+    auto rng = makeRng();
 
-    const auto a = make_vec3_data(N, rng);
-    const auto b = make_vec3_data(N, rng);
+    const auto a = makeVec3Data(N, rng);
+    const auto b = makeVec3Data(N, rng);
 
 #if FM_HAVE_GLM
     std::vector<glm::vec3> ga(N), gb(N);
@@ -92,7 +92,7 @@ FM_BENCH(Vector, Vec3DotCrossNormalize) {
     }
 #endif
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "vec3 dot+cross+normalize",
         static_cast<std::size_t>(N * 3),
         {
@@ -157,14 +157,14 @@ FM_BENCH(Vector, Vec3DotCrossNormalize) {
 }
 
 FM_BENCH(Matrix, Mat4MulMulVecTransposeInverse) {
-    auto rng = make_rng();
+    auto rng = makeRng();
 
     constexpr int N_MUL = 2048;
     constexpr int N_INV = 256;
 
-    const auto a = make_mat4_data(N_MUL, rng);
-    const auto b = make_mat4_data(N_MUL, rng);
-    const auto v = make_vec4_data(N_MUL, rng);
+    const auto a = makeMat4Data(N_MUL, rng);
+    const auto b = makeMat4Data(N_MUL, rng);
+    const auto v = makeVec4Data(N_MUL, rng);
 
 #if FM_HAVE_GLM
     std::vector<glm::mat4> ga(N_MUL), gb(N_MUL);
@@ -201,7 +201,7 @@ FM_BENCH(Matrix, Mat4MulMulVecTransposeInverse) {
     }
 #endif
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "mat4 mul + mulVec + transpose + inverse",
         static_cast<std::size_t>(N_MUL * 3 + N_INV),
         {
@@ -286,7 +286,7 @@ FM_BENCH(Matrix, Mat4MulMulVecTransposeInverse) {
 
 FM_BENCH(Matrix, LookAtConstruction) {
     constexpr int N = 4096;
-    auto rng = make_rng();
+    auto rng = makeRng();
 
     std::vector<MMath::Vec4> eyes(N), targets(N), ups(N);
     for (int i = 0; i < N; ++i) {
@@ -320,7 +320,7 @@ FM_BENCH(Matrix, LookAtConstruction) {
     }
 #endif
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "lookAt construction",
         static_cast<std::size_t>(N),
         {
@@ -393,7 +393,7 @@ FM_BENCH(Matrix, LookAtConstruction) {
 
 FM_BENCH(Matrix, PerspectiveConstruction) {
     constexpr int N = 4096;
-    auto rng = make_rng();
+    auto rng = makeRng();
 
     std::vector<float> fovy(N), aspect(N), near_z(N), far_z(N);
     for (int i = 0; i < N; ++i) {
@@ -403,7 +403,7 @@ FM_BENCH(Matrix, PerspectiveConstruction) {
         far_z[i] = near_z[i] + rng.uniform(100.0f, 1500.0f);
     }
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "perspective construction",
         static_cast<std::size_t>(N),
         {

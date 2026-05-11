@@ -42,11 +42,11 @@ public:
     const std::vector<TestCase>& tests() const noexcept;
 
 private:
-    std::vector<TestCase> tests_;
+    std::vector<TestCase> test_cases;
 };
 
-bool register_test(const char* suite, const char* name, TestFn fn);
-RunSummary run_all_tests(const RunOptions& options = {});
+bool registerTest(const char* suite_, const char* name_, TestFn fn_);
+RunSummary runAllTests(const RunOptions& options_ = {});
 
 [[noreturn]] void fail(
     const char* expr,
@@ -54,36 +54,36 @@ RunSummary run_all_tests(const RunOptions& options = {});
     const char* file,
     int line);
 
-void require_true(bool condition, const char* expr, const char* file, int line);
-void require_near(
-    double actual,
-    double expected,
-    double epsilon,
-    const char* actual_expr,
-    const char* expected_expr,
-    const char* file,
-    int line);
-void require_eq(
-    std::string_view actual,
-    std::string_view expected,
-    const char* actual_expr,
-    const char* expected_expr,
-    const char* file,
-    int line);
-void require_eq(
-    long long actual,
-    long long expected,
-    const char* actual_expr,
-    const char* expected_expr,
-    const char* file,
-    int line);
-void require_eq(
-    unsigned long long actual,
-    unsigned long long expected,
-    const char* actual_expr,
-    const char* expected_expr,
-    const char* file,
-    int line);
+void requireTrue(bool condition_, const char* expr_, const char* file_, int line_);
+void requireNear(
+    double actual_,
+    double expected_,
+    double epsilon_,
+    const char* actual_expr_,
+    const char* expected_expr_,
+    const char* file_,
+    int line_);
+void requireEq(
+    std::string_view actual_,
+    std::string_view expected_,
+    const char* actual_expr_,
+    const char* expected_expr_,
+    const char* file_,
+    int line_);
+void requireEq(
+    long long actual_,
+    long long expected_,
+    const char* actual_expr_,
+    const char* expected_expr_,
+    const char* file_,
+    int line_);
+void requireEq(
+    unsigned long long actual_,
+    unsigned long long expected_,
+    const char* actual_expr_,
+    const char* expected_expr_,
+    const char* file_,
+    int line_);
 
 } // namespace fmtest
 
@@ -94,15 +94,15 @@ void require_eq(
     static void FM_CONCAT(fm_test_fn_, __LINE__)();                                           \
     namespace {                                                                                \
     const bool FM_CONCAT(fm_test_reg_, __LINE__) =                                            \
-        ::fmtest::register_test(#SUITE, #NAME, &FM_CONCAT(fm_test_fn_, __LINE__));            \
+        ::fmtest::registerTest(#SUITE, #NAME, &FM_CONCAT(fm_test_fn_, __LINE__));             \
     }                                                                                          \
     static void FM_CONCAT(fm_test_fn_, __LINE__)()
 
 #define FM_REQUIRE(EXPR)                                                                       \
-    ::fmtest::require_true((EXPR), #EXPR, __FILE__, __LINE__)
+    ::fmtest::requireTrue((EXPR), #EXPR, __FILE__, __LINE__)
 
 #define FM_REQUIRE_NEAR(ACTUAL, EXPECTED, EPS)                                                 \
-    ::fmtest::require_near(                                                                    \
+    ::fmtest::requireNear(                                                                     \
         static_cast<double>(ACTUAL),                                                           \
         static_cast<double>(EXPECTED),                                                         \
         static_cast<double>(EPS),                                                              \
@@ -112,10 +112,10 @@ void require_eq(
         __LINE__)
 
 #define FM_REQUIRE_EQ_STR(ACTUAL, EXPECTED)                                                    \
-    ::fmtest::require_eq((ACTUAL), (EXPECTED), #ACTUAL, #EXPECTED, __FILE__, __LINE__)
+    ::fmtest::requireEq((ACTUAL), (EXPECTED), #ACTUAL, #EXPECTED, __FILE__, __LINE__)
 
 #define FM_REQUIRE_EQ_I64(ACTUAL, EXPECTED)                                                    \
-    ::fmtest::require_eq(                                                                      \
+    ::fmtest::requireEq(                                                                       \
         static_cast<long long>(ACTUAL),                                                        \
         static_cast<long long>(EXPECTED),                                                      \
         #ACTUAL,                                                                               \
@@ -124,7 +124,7 @@ void require_eq(
         __LINE__)
 
 #define FM_REQUIRE_EQ_U64(ACTUAL, EXPECTED)                                                    \
-    ::fmtest::require_eq(                                                                      \
+    ::fmtest::requireEq(                                                                       \
         static_cast<unsigned long long>(ACTUAL),                                               \
         static_cast<unsigned long long>(EXPECTED),                                             \
         #ACTUAL,                                                                               \

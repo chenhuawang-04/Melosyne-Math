@@ -133,7 +133,7 @@ FM_TEST(Aabb3, RandomizedOverlapAndUnion) {
         FM_REQUIRE(MMath::aabb3ContainsAabb(uni, x));
         FM_REQUIRE(MMath::aabb3ContainsAabb(uni, y));
 
-        MMath::Vec3 p = fmtest::random_vec3(rng, -20.0f, 20.0f);
+        MMath::Vec3 p = fmtest::randomVec3(rng, -20.0f, 20.0f);
         MMath::Aabb3 expanded = MMath::aabb3ExpandToPoint(x, p);
         FM_REQUIRE(MMath::aabb3Contains(expanded, p));
     }

@@ -12,18 +12,18 @@ namespace {
 using namespace MMath;
 using namespace MMath::BitOps;
 
-std::size_t ref_popcount(ConstBitSetView view) {
+std::size_t refPopcount(ConstBitSetView view_) {
     std::size_t c = 0;
-    for (std::size_t i = 0; i < view.word_count; ++i) {
-        c += std::popcount(view.data[i]);
+    for (std::size_t i = 0; i < view_.word_count; ++i) {
+        c += std::popcount(view_.data[i]);
     }
     return c;
 }
 
 template <std::size_t N>
-BitSet<N> make_pattern(uint32_t seed) {
+BitSet<N> makePattern(uint32_t seed_) {
     BitSet<N> bs{};
-    uint32_t x = seed;
+    uint32_t x = seed_;
     for (std::size_t i = 0; i < N; ++i) {
         x = x * 1664525u + 1013904223u;
         if ((x >> 31) & 1u) {
@@ -78,11 +78,11 @@ FM_TEST(BitOps, SingleBitAndCoreOps) {
 }
 
 FM_TEST(BitOps, CountMetricsAgainstReference) {
-    BitSet<1024> a = make_pattern<1024>(0x12345678u);
-    BitSet<1024> b = make_pattern<1024>(0x9ABCDEF0u);
+    BitSet<1024> a = makePattern<1024>(0x12345678u);
+    BitSet<1024> b = makePattern<1024>(0x9ABCDEF0u);
 
-    const std::size_t pa = ref_popcount(a);
-    const std::size_t pb = ref_popcount(b);
+    const std::size_t pa = refPopcount(a);
+    const std::size_t pb = refPopcount(b);
 
     FM_REQUIRE_EQ_U64(popcount(a), pa);
     FM_REQUIRE_EQ_U64(popcount(b), pb);
@@ -103,8 +103,8 @@ FM_TEST(BitOps, CountMetricsAgainstReference) {
 }
 
 FM_TEST(BitOps, BitwiseAndCountMatchesSeparatePasses) {
-    BitSet<257> a = make_pattern<257>(0x10293847u);
-    BitSet<257> b = make_pattern<257>(0x55667788u);
+    BitSet<257> a = makePattern<257>(0x10293847u);
+    BitSet<257> b = makePattern<257>(0x55667788u);
 
     BitSet<257> separate = a;
     bitwiseAnd(separate, b);
@@ -122,7 +122,7 @@ FM_TEST(BitOps, BitwiseAndCountMatchesSeparatePasses) {
     FM_REQUIRE(equal(fused_opt, separate));
 #endif
 
-    BitSet<191> c = make_pattern<191>(0xCAFEBABEu);
+    BitSet<191> c = makePattern<191>(0xCAFEBABEu);
     DynamicBitSet dyn_a(257);
     DynamicBitSet dyn_b(191);
     copy(dyn_a, a);
@@ -252,7 +252,7 @@ FM_TEST(BitOps, AdvancedOpsHandlePartialWordsAndSentinels) {
 }
 
 FM_TEST(BitOps, DynamicStaticCompatibility) {
-    BitSet<512> st = make_pattern<512>(0x11112222u);
+    BitSet<512> st = makePattern<512>(0x11112222u);
     DynamicBitSet dy(512);
 
     copy(dy, st);
@@ -303,8 +303,8 @@ FM_TEST(BitOps, DynamicBitSetStorageManagement) {
 }
 
 FM_TEST(BitOps, OptimizedApisMatchScalar) {
-    BitSet<8192> a = make_pattern<8192>(0x77778888u);
-    BitSet<8192> b = make_pattern<8192>(0x33334444u);
+    BitSet<8192> a = makePattern<8192>(0x77778888u);
+    BitSet<8192> b = makePattern<8192>(0x33334444u);
 
 #if defined(__AVX2__) || defined(__SSE4_1__)
     BitSet<8192> scalar_and = a;

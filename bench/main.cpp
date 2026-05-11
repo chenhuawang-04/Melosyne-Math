@@ -36,5 +36,5 @@ int main(int argc, char** argv) {
         }
     }
 
-    return fmbench::run_all(options);
+    return fmbench::runAll(options);
 }

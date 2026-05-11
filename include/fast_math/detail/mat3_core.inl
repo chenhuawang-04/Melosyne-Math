@@ -184,11 +184,11 @@ MMATH_FORCE_INLINE bool mat3Equal(Mat3 a_, Mat3 b_) noexcept {
  * @brief Near-equality comparison with epsilon
  */
 MMATH_FORCE_INLINE bool mat3NearEqual(Mat3 a_, Mat3 b_, float epsilon_) noexcept {
-    auto is_near_ = [epsilon_](float x, float y) {
-        float d = x - y;
+    auto is_near = [epsilon_](float x_, float y_) {
+        float d = x_ - y_;
         return (d < 0 ? -d : d) <= epsilon_;
     };
-    return is_near_(a_.m00, b_.m00) && is_near_(a_.m01, b_.m01) && is_near_(a_.m02, b_.m02) &&
-           is_near_(a_.m10, b_.m10) && is_near_(a_.m11, b_.m11) && is_near_(a_.m12, b_.m12) &&
-           is_near_(a_.m20, b_.m20) && is_near_(a_.m21, b_.m21) && is_near_(a_.m22, b_.m22);
+    return is_near(a_.m00, b_.m00) && is_near(a_.m01, b_.m01) && is_near(a_.m02, b_.m02) &&
+           is_near(a_.m10, b_.m10) && is_near(a_.m11, b_.m11) && is_near(a_.m12, b_.m12) &&
+           is_near(a_.m20, b_.m20) && is_near(a_.m21, b_.m21) && is_near(a_.m22, b_.m22);
 }

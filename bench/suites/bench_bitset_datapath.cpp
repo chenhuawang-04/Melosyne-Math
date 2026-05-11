@@ -50,7 +50,7 @@ FM_BENCH(DataStructure, DynamicBitSetLifecycle_4K) {
     constexpr std::size_t BITS = 4096;
     constexpr int ITERS = 2048;
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "dynamic bitset lifecycle (4K bits)",
         static_cast<std::size_t>(ITERS),
         {
@@ -77,7 +77,7 @@ FM_BENCH(DataStructure, DynamicBitSetCopyMove_64K) {
     DynamicBitSet src(BITS);
     seed_pattern(src, BITS, 0xA1B2C3D4u);
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "dynamic bitset copy/move (64K bits)",
         static_cast<std::size_t>(ITERS * 4),
         {
@@ -106,7 +106,7 @@ FM_BENCH(DataStructure, DynamicBitSetBitAccessRandom_16K) {
     DynamicBitSet bs(BITS);
     const auto idx = make_indices(INDICES, BITS, 0xCAFEBABEu);
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "dynamic bitset random set/reset/test (16K bits)",
         static_cast<std::size_t>(ROUNDS * INDICES * 3),
         {
@@ -136,7 +136,7 @@ FM_BENCH(DataStructure, DynamicBitSetBulkFlipCount_64K) {
     DynamicBitSet bs(BITS);
     seed_pattern(bs, BITS, 0x13579BDFu);
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "dynamic bitset setAll/resetAll/flipAll/popcount (64K bits)",
         static_cast<std::size_t>(ROUNDS * 4),
         {
@@ -167,7 +167,7 @@ FM_BENCH(BitOps, DynamicThroughputScalarVsOptimized_4K) {
     for (std::size_t i = 0; i < N; i += 3) set(a, i);
     for (std::size_t i = 0; i < N; i += 5) set(b, i);
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "dynamic bitset and+count+rank kernel (4K bits)",
         static_cast<std::size_t>(ROUNDS * 3),
         {
@@ -221,7 +221,7 @@ FM_BENCH(BitOps, DynamicAndPopcountLarge_64K) {
     seed_pattern(a, N, 0x10203040u);
     seed_pattern(b, N, 0x55667788u);
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "dynamic bitset and+popcount (64K bits)",
         static_cast<std::size_t>(ROUNDS * 2),
         {
@@ -273,7 +273,7 @@ FM_BENCH(StdBitsetCmp, DynamicVsStdBitset_AndCount_4K) {
     seed_pattern_std(a_std, 0x10293847u);
     seed_pattern_std(b_std, 0x55667788u);
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "dynamic vs std::bitset and+count (4K bits)",
         static_cast<std::size_t>(ROUNDS * 2),
         {
@@ -317,7 +317,7 @@ FM_BENCH(StdBitsetCmp, DynamicVsStdBitset_AndCount_64K) {
     seed_pattern_std(a_std, 0xA1B2C3D4u);
     seed_pattern_std(b_std, 0x0F1E2D3Cu);
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "dynamic vs std::bitset and+count (64K bits)",
         static_cast<std::size_t>(ROUNDS * 2),
         {
@@ -353,7 +353,7 @@ FM_BENCH(StdBitsetCmp, DynamicVsStdBitset_RandomBitAccess_16K) {
     DynamicBitSet dyn(N);
     std::bitset<N> st;
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "dynamic vs std::bitset random set/test/reset (16K bits)",
         static_cast<std::size_t>(ROUNDS * INDICES * 3),
         {

@@ -22,65 +22,65 @@ public:
     // =========================================================================
 
     DynamicBitSet() noexcept
-        : bit_count_(0),
-          word_count_(0),
-          capacity_words_(kLocalWords),
-          memory_resource_(std::pmr::get_default_resource()),
-          is_local_(true),
-          remote_alignment_(alignof(uint64_t)) {
-        std::memset(local_words_, 0, sizeof(local_words_));
+        : bit_count(0),
+          word_count(0),
+          capacity_words(kLocalWords),
+          memory_resource(std::pmr::get_default_resource()),
+          is_local(true),
+          remote_alignment(alignof(uint64_t)) {
+        std::memset(local_words, 0, sizeof(local_words));
     }
 
     explicit DynamicBitSet(std::size_t num_bits_)
         : DynamicBitSet(num_bits_, std::pmr::get_default_resource()) {}
 
     DynamicBitSet(std::size_t num_bits_, std::pmr::memory_resource* mr_)
-        : bit_count_(num_bits_),
-          word_count_(wordsForBits(num_bits_)),
-          capacity_words_(kLocalWords),
-          memory_resource_(sanitizeResource(mr_)),
-          is_local_(true),
-          remote_alignment_(alignof(uint64_t)) {
-        std::memset(local_words_, 0, sizeof(local_words_));
+        : bit_count(num_bits_),
+          word_count(wordsForBits(num_bits_)),
+          capacity_words(kLocalWords),
+          memory_resource(sanitizeResource(mr_)),
+          is_local(true),
+          remote_alignment(alignof(uint64_t)) {
+        std::memset(local_words, 0, sizeof(local_words));
 
-        if (word_count_ > kLocalWords) {
-            is_local_ = false;
-            capacity_words_ = word_count_;
-            remote_alignment_ = requiredAlignment(capacity_words_);
-            remote_words_ = allocateWords(capacity_words_, remote_alignment_);
-            std::memset(remote_words_, 0, capacity_words_ * sizeof(uint64_t));
+        if (word_count > kLocalWords) {
+            is_local = false;
+            capacity_words = word_count;
+            remote_alignment = requiredAlignment(capacity_words);
+            remote_words = allocateWords(capacity_words, remote_alignment);
+            std::memset(remote_words, 0, capacity_words * sizeof(uint64_t));
         }
     }
 
     DynamicBitSet(const DynamicBitSet& other_)
-        : bit_count_(other_.bit_count_),
-          word_count_(other_.word_count_),
-          capacity_words_(other_.word_count_ > kLocalWords ? other_.word_count_ : kLocalWords),
-          memory_resource_(other_.memory_resource_),
-          is_local_(other_.word_count_ <= kLocalWords),
-          remote_alignment_(other_.remote_alignment_) {
-        if (is_local_) {
-            remote_alignment_ = alignof(uint64_t);
-            std::memcpy(local_words_, other_.local_words_, sizeof(local_words_));
+        : bit_count(other_.bit_count),
+          word_count(other_.word_count),
+          capacity_words(other_.word_count > kLocalWords ? other_.word_count : kLocalWords),
+          memory_resource(other_.memory_resource),
+          is_local(other_.word_count <= kLocalWords),
+          remote_alignment(other_.remote_alignment) {
+        if (is_local) {
+            remote_alignment = alignof(uint64_t);
+            std::memcpy(local_words, other_.local_words, sizeof(local_words));
         } else {
-            remote_alignment_ = requiredAlignment(capacity_words_);
-            remote_words_ = allocateWords(capacity_words_, remote_alignment_);
-            std::memcpy(remote_words_, other_.remote_words_, word_count_ * sizeof(uint64_t));
+            remote_alignment = requiredAlignment(capacity_words);
+            remote_words = allocateWords(capacity_words, remote_alignment);
+            std::memcpy(remote_words, other_.remote_words, word_count * sizeof(uint64_t));
         }
     }
 
     DynamicBitSet(DynamicBitSet&& other_) noexcept
-        : bit_count_(other_.bit_count_),
-          word_count_(other_.word_count_),
-          capacity_words_(other_.capacity_words_),
-          memory_resource_(other_.memory_resource_),
-          is_local_(other_.is_local_),
-          remote_alignment_(other_.remote_alignment_) {
-        if (is_local_) {
-            std::memcpy(local_words_, other_.local_words_, sizeof(local_words_));
+        : bit_count(other_.bit_count),
+          word_count(other_.word_count),
+          capacity_words(other_.capacity_words),
+          memory_resource(other_.memory_resource),
+          is_local(other_.is_local),
+          remote_alignment(other_.remote_alignment) {
+        if (is_local) {
+            std::memcpy(local_words, other_.local_words, sizeof(local_words));
         } else {
-            remote_words_ = other_.remote_words_;
-            other_.remote_words_ = nullptr;
+            remote_words = other_.remote_words;
+            other_.remote_words = nullptr;
         }
         other_.resetToDefaultState();
     }
@@ -94,42 +94,42 @@ public:
             return *this;
         }
 
-        const std::size_t other_words = other_.word_count_;
+        const std::size_t other_words = other_.word_count;
         const bool other_local = other_words <= kLocalWords;
 
         if (other_local) {
-            if (!is_local_) {
+            if (!is_local) {
                 releaseRemoteIfAny();
-                is_local_ = true;
-                capacity_words_ = kLocalWords;
+                is_local = true;
+                capacity_words = kLocalWords;
             }
-            memory_resource_ = other_.memory_resource_;
-            remote_alignment_ = alignof(uint64_t);
-            bit_count_ = other_.bit_count_;
-            word_count_ = other_words;
-            std::memcpy(local_words_, other_.local_words_, sizeof(local_words_));
+            memory_resource = other_.memory_resource;
+            remote_alignment = alignof(uint64_t);
+            bit_count = other_.bit_count;
+            word_count = other_words;
+            std::memcpy(local_words, other_.local_words, sizeof(local_words));
             return *this;
         }
 
         // Remote target. Reuse existing remote allocation when possible.
         const std::size_t required_align = requiredAlignment(other_words);
-        const bool same_resource = (memory_resource_ == other_.memory_resource_);
-        const bool can_reuse_remote = (!is_local_) && same_resource &&
-                                      (capacity_words_ >= other_words) &&
-                                      (remote_alignment_ >= required_align);
+        const bool same_resource = (memory_resource == other_.memory_resource);
+        const bool can_reuse_remote = (!is_local) && same_resource &&
+                                      (capacity_words >= other_words) &&
+                                      (remote_alignment >= required_align);
 
         if (!can_reuse_remote) {
             releaseRemoteIfAny();
-            memory_resource_ = other_.memory_resource_;
-            is_local_ = false;
-            capacity_words_ = other_words;
-            remote_alignment_ = required_align;
-            remote_words_ = allocateWords(capacity_words_, required_align);
+            memory_resource = other_.memory_resource;
+            is_local = false;
+            capacity_words = other_words;
+            remote_alignment = required_align;
+            remote_words = allocateWords(capacity_words, required_align);
         }
 
-        bit_count_ = other_.bit_count_;
-        word_count_ = other_words;
-        std::memcpy(remote_words_, other_.remote_words_, other_words * sizeof(uint64_t));
+        bit_count = other_.bit_count;
+        word_count = other_words;
+        std::memcpy(remote_words, other_.remote_words, other_words * sizeof(uint64_t));
         clearUnusedBits();
         return *this;
     }
@@ -141,18 +141,18 @@ public:
 
         releaseRemoteIfAny();
 
-        bit_count_ = other_.bit_count_;
-        word_count_ = other_.word_count_;
-        capacity_words_ = other_.capacity_words_;
-        memory_resource_ = other_.memory_resource_;
-        is_local_ = other_.is_local_;
-        remote_alignment_ = other_.remote_alignment_;
+        bit_count = other_.bit_count;
+        word_count = other_.word_count;
+        capacity_words = other_.capacity_words;
+        memory_resource = other_.memory_resource;
+        is_local = other_.is_local;
+        remote_alignment = other_.remote_alignment;
 
-        if (is_local_) {
-            std::memcpy(local_words_, other_.local_words_, sizeof(local_words_));
+        if (is_local) {
+            std::memcpy(local_words, other_.local_words, sizeof(local_words));
         } else {
-            remote_words_ = other_.remote_words_;
-            other_.remote_words_ = nullptr;
+            remote_words = other_.remote_words;
+            other_.remote_words = nullptr;
         }
 
         other_.resetToDefaultState();
@@ -179,13 +179,13 @@ public:
 
     void resize(std::size_t bits_, bool value_ = false) {
         const std::size_t new_words = wordsForBits(bits_);
-        const std::size_t old_bits = bit_count_;
-        const std::size_t old_words = word_count_;
+        const std::size_t old_bits = bit_count;
+        const std::size_t old_words = word_count;
 
         reserveWords(new_words);
 
-        bit_count_ = bits_;
-        word_count_ = new_words;
+        bit_count = bits_;
+        word_count = new_words;
 
         uint64_t* words = getWords();
 
@@ -203,35 +203,35 @@ public:
     }
 
     void shrinkToFit() {
-        if (is_local_) {
+        if (is_local) {
             return;
         }
 
-        if (word_count_ <= kLocalWords) {
+        if (word_count <= kLocalWords) {
             alignas(kSimdAlignment) uint64_t tmp[kLocalWords] = {};
-            std::memcpy(tmp, remote_words_, word_count_ * sizeof(uint64_t));
+            std::memcpy(tmp, remote_words, word_count * sizeof(uint64_t));
             releaseRemoteIfAny();
-            is_local_ = true;
-            capacity_words_ = kLocalWords;
-            remote_alignment_ = alignof(uint64_t);
-            std::memcpy(local_words_, tmp, sizeof(local_words_));
+            is_local = true;
+            capacity_words = kLocalWords;
+            remote_alignment = alignof(uint64_t);
+            std::memcpy(local_words, tmp, sizeof(local_words));
             return;
         }
 
-        if (capacity_words_ == word_count_) {
+        if (capacity_words == word_count) {
             return;
         }
 
-        const std::size_t align = requiredAlignment(word_count_);
-        uint64_t* new_words = allocateWords(word_count_, align);
-        std::memcpy(new_words, remote_words_, word_count_ * sizeof(uint64_t));
-        memory_resource_->deallocate(
-            remote_words_,
-            capacity_words_ * sizeof(uint64_t),
-            remote_alignment_);
-        remote_words_ = new_words;
-        capacity_words_ = word_count_;
-        remote_alignment_ = align;
+        const std::size_t align = requiredAlignment(word_count);
+        uint64_t* new_words = allocateWords(word_count, align);
+        std::memcpy(new_words, remote_words, word_count * sizeof(uint64_t));
+        memory_resource->deallocate(
+            remote_words,
+            capacity_words * sizeof(uint64_t),
+            remote_alignment);
+        remote_words = new_words;
+        capacity_words = word_count;
+        remote_alignment = align;
     }
 
     // =========================================================================
@@ -262,25 +262,25 @@ public:
     }
 
     DynamicBitSet& setAll() noexcept {
-        if (word_count_ == 0) {
+        if (word_count == 0) {
             return *this;
         }
-        std::memset(getWords(), 0xFF, word_count_ * sizeof(uint64_t));
+        std::memset(getWords(), 0xFF, word_count * sizeof(uint64_t));
         clearUnusedBits();
         return *this;
     }
 
     DynamicBitSet& resetAll() noexcept {
-        if (word_count_ == 0) {
+        if (word_count == 0) {
             return *this;
         }
-        std::memset(getWords(), 0x00, word_count_ * sizeof(uint64_t));
+        std::memset(getWords(), 0x00, word_count * sizeof(uint64_t));
         return *this;
     }
 
     DynamicBitSet& flipAll() noexcept {
         uint64_t* words = getWords();
-        for (std::size_t i = 0; i < word_count_; ++i) {
+        for (std::size_t i = 0; i < word_count; ++i) {
             words[i] = ~words[i];
         }
         clearUnusedBits();
@@ -292,12 +292,12 @@ public:
     // =========================================================================
 
     [[nodiscard]] bool operator==(const DynamicBitSet& rhs_) const noexcept {
-        if (bit_count_ != rhs_.bit_count_) {
+        if (bit_count != rhs_.bit_count) {
             return false;
         }
         const uint64_t* words = getWords();
         const uint64_t* rhs_words = rhs_.getWords();
-        for (std::size_t i = 0; i < word_count_; ++i) {
+        for (std::size_t i = 0; i < word_count; ++i) {
             if (words[i] != rhs_words[i]) {
                 return false;
             }
@@ -314,23 +314,23 @@ public:
     // =========================================================================
 
     [[nodiscard]] MMATH_FORCE_INLINE std::size_t size() const noexcept {
-        return bit_count_;
+        return bit_count;
     }
 
     [[nodiscard]] MMATH_FORCE_INLINE std::size_t wordCount() const noexcept {
-        return word_count_;
+        return word_count;
     }
 
     [[nodiscard]] MMATH_FORCE_INLINE std::size_t capacity() const noexcept {
-        return capacity_words_ * kWordBits;
+        return capacity_words * kWordBits;
     }
 
     [[nodiscard]] MMATH_FORCE_INLINE std::size_t capacityWords() const noexcept {
-        return capacity_words_;
+        return capacity_words;
     }
 
     [[nodiscard]] MMATH_FORCE_INLINE bool isSso() const noexcept {
-        return is_local_;
+        return is_local;
     }
 
     [[nodiscard]] MMATH_FORCE_INLINE bool isAligned32() const noexcept {
@@ -339,14 +339,14 @@ public:
     }
 
     [[nodiscard]] std::size_t memoryUsage() const noexcept {
-        if (is_local_) {
-            return sizeof(local_words_);
+        if (is_local) {
+            return sizeof(local_words);
         }
-        return capacity_words_ * sizeof(uint64_t);
+        return capacity_words * sizeof(uint64_t);
     }
 
     [[nodiscard]] MMATH_FORCE_INLINE std::pmr::memory_resource* getMemoryResource() const noexcept {
-        return memory_resource_;
+        return memory_resource;
     }
 
     // =========================================================================
@@ -379,36 +379,36 @@ private:
             return nullptr;
         }
         return static_cast<uint64_t*>(
-            memory_resource_->allocate(count_words_ * sizeof(uint64_t), alignment_));
+            memory_resource->allocate(count_words_ * sizeof(uint64_t), alignment_));
     }
 
     void releaseRemoteIfAny() noexcept {
-        if (!is_local_ && remote_words_) {
-            memory_resource_->deallocate(
-                remote_words_,
-                capacity_words_ * sizeof(uint64_t),
-                remote_alignment_);
-            remote_words_ = nullptr;
+        if (!is_local && remote_words) {
+            memory_resource->deallocate(
+                remote_words,
+                capacity_words * sizeof(uint64_t),
+                remote_alignment);
+            remote_words = nullptr;
         }
     }
 
     void resetToDefaultState() noexcept {
-        bit_count_ = 0;
-        word_count_ = 0;
-        capacity_words_ = kLocalWords;
-        memory_resource_ = std::pmr::get_default_resource();
-        is_local_ = true;
-        remote_alignment_ = alignof(uint64_t);
-        std::memset(local_words_, 0, sizeof(local_words_));
+        bit_count = 0;
+        word_count = 0;
+        capacity_words = kLocalWords;
+        memory_resource = std::pmr::get_default_resource();
+        is_local = true;
+        remote_alignment = alignof(uint64_t);
+        std::memset(local_words, 0, sizeof(local_words));
     }
 
     void reserveWords(std::size_t requested_words_) {
-        if (requested_words_ <= capacity_words_) {
+        if (requested_words_ <= capacity_words) {
             return;
         }
 
         // Geometric growth for repeated resize/assignment heavy workloads.
-        std::size_t new_capacity = std::max(requested_words_, capacity_words_ * 2);
+        std::size_t new_capacity = std::max(requested_words_, capacity_words * 2);
         if (new_capacity < kLocalWords) {
             new_capacity = kLocalWords;
         }
@@ -416,57 +416,57 @@ private:
         const std::size_t new_alignment = requiredAlignment(new_capacity);
         uint64_t* new_words = allocateWords(new_capacity, new_alignment);
         uint64_t* old_words = getWords();
-        if (word_count_ > 0) {
-            std::memcpy(new_words, old_words, word_count_ * sizeof(uint64_t));
+        if (word_count > 0) {
+            std::memcpy(new_words, old_words, word_count * sizeof(uint64_t));
         }
-        if (new_capacity > word_count_) {
-            std::memset(new_words + word_count_, 0, (new_capacity - word_count_) * sizeof(uint64_t));
-        }
-
-        if (!is_local_ && remote_words_) {
-            memory_resource_->deallocate(
-                remote_words_,
-                capacity_words_ * sizeof(uint64_t),
-                remote_alignment_);
+        if (new_capacity > word_count) {
+            std::memset(new_words + word_count, 0, (new_capacity - word_count) * sizeof(uint64_t));
         }
 
-        remote_words_ = new_words;
-        is_local_ = false;
-        capacity_words_ = new_capacity;
-        remote_alignment_ = new_alignment;
+        if (!is_local && remote_words) {
+            memory_resource->deallocate(
+                remote_words,
+                capacity_words * sizeof(uint64_t),
+                remote_alignment);
+        }
+
+        remote_words = new_words;
+        is_local = false;
+        capacity_words = new_capacity;
+        remote_alignment = new_alignment;
     }
 
     MMATH_FORCE_INLINE uint64_t* getWords() noexcept {
-        return is_local_ ? local_words_ : remote_words_;
+        return is_local ? local_words : remote_words;
     }
 
     MMATH_FORCE_INLINE const uint64_t* getWords() const noexcept {
-        return is_local_ ? local_words_ : remote_words_;
+        return is_local ? local_words : remote_words;
     }
 
     void clearUnusedBits() noexcept {
-        if (bit_count_ == 0 || word_count_ == 0) {
+        if (bit_count == 0 || word_count == 0) {
             return;
         }
-        const std::size_t used_bits_last = bit_count_ % kWordBits;
+        const std::size_t used_bits_last = bit_count % kWordBits;
         if (used_bits_last == 0) {
             return;
         }
         const uint64_t mask = (uint64_t{1} << used_bits_last) - 1;
         uint64_t* words = getWords();
-        words[word_count_ - 1] &= mask;
+        words[word_count - 1] &= mask;
     }
 
     // layout metadata
-    std::size_t bit_count_;
-    std::size_t word_count_;
-    std::size_t capacity_words_;
-    std::pmr::memory_resource* memory_resource_;
-    bool is_local_;
-    std::size_t remote_alignment_;
+    std::size_t bit_count;
+    std::size_t word_count;
+    std::size_t capacity_words;
+    std::pmr::memory_resource* memory_resource;
+    bool is_local;
+    std::size_t remote_alignment;
 
     union {
-        alignas(kSimdAlignment) uint64_t local_words_[kLocalWords];
-        uint64_t* remote_words_;
+        alignas(kSimdAlignment) uint64_t local_words[kLocalWords];
+        uint64_t* remote_words;
     };
 };

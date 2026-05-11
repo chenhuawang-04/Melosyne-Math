@@ -13,16 +13,16 @@ Registry& Registry::instance() {
 }
 
 bool Registry::add(std::string suite, std::string name, TestFn fn) {
-    tests_.push_back(TestCase{std::move(suite), std::move(name), fn});
+    test_cases.push_back(TestCase{std::move(suite), std::move(name), fn});
     return true;
 }
 
 const std::vector<TestCase>& Registry::tests() const noexcept {
-    return tests_;
+    return test_cases;
 }
 
-bool register_test(const char* suite, const char* name, TestFn fn) {
-    return Registry::instance().add(suite, name, fn);
+bool registerTest(const char* suite_, const char* name_, TestFn fn_) {
+    return Registry::instance().add(suite_, name_, fn_);
 }
 
 [[noreturn]] void fail(
@@ -37,77 +37,77 @@ bool register_test(const char* suite, const char* name, TestFn fn) {
     throw TestFailure(oss.str());
 }
 
-void require_true(bool condition, const char* expr, const char* file, int line) {
-    if (!condition) {
-        fail(expr, "condition evaluated to false", file, line);
+void requireTrue(bool condition_, const char* expr_, const char* file_, int line_) {
+    if (!condition_) {
+        fail(expr_, "condition evaluated to false", file_, line_);
     }
 }
 
-void require_near(
-    double actual,
-    double expected,
-    double epsilon,
-    const char* actual_expr,
-    const char* expected_expr,
-    const char* file,
-    int line) {
-    const double diff = std::abs(actual - expected);
-    if (diff > epsilon) {
+void requireNear(
+    double actual_,
+    double expected_,
+    double epsilon_,
+    const char* actual_expr_,
+    const char* expected_expr_,
+    const char* file_,
+    int line_) {
+    const double diff = std::abs(actual_ - expected_);
+    if (diff > epsilon_) {
         std::ostringstream oss;
         oss << std::setprecision(17)
-            << actual_expr << " = " << actual << ", "
-            << expected_expr << " = " << expected << ", "
-            << "|diff| = " << diff << ", epsilon = " << epsilon;
-        fail("near(actual, expected)", oss.str(), file, line);
+            << actual_expr_ << " = " << actual_ << ", "
+            << expected_expr_ << " = " << expected_ << ", "
+            << "|diff| = " << diff << ", epsilon = " << epsilon_;
+        fail("near(actual, expected)", oss.str(), file_, line_);
     }
 }
 
-void require_eq(
-    std::string_view actual,
-    std::string_view expected,
-    const char* actual_expr,
-    const char* expected_expr,
-    const char* file,
-    int line) {
-    if (actual != expected) {
+void requireEq(
+    std::string_view actual_,
+    std::string_view expected_,
+    const char* actual_expr_,
+    const char* expected_expr_,
+    const char* file_,
+    int line_) {
+    if (actual_ != expected_) {
         std::ostringstream oss;
-        oss << actual_expr << " = '" << actual << "', "
-            << expected_expr << " = '" << expected << "'";
-        fail("string equality", oss.str(), file, line);
+        oss << actual_expr_ << " = '" << actual_ << "', "
+            << expected_expr_ << " = '" << expected_ << "'";
+        fail("string equality", oss.str(), file_, line_);
     }
 }
 
-void require_eq(
-    long long actual,
-    long long expected,
-    const char* actual_expr,
-    const char* expected_expr,
-    const char* file,
-    int line) {
-    if (actual != expected) {
+void requireEq(
+    long long actual_,
+    long long expected_,
+    const char* actual_expr_,
+    const char* expected_expr_,
+    const char* file_,
+    int line_) {
+    if (actual_ != expected_) {
         std::ostringstream oss;
-        oss << actual_expr << " = " << actual << ", "
-            << expected_expr << " = " << expected;
-        fail("integer equality", oss.str(), file, line);
+        oss << actual_expr_ << " = " << actual_ << ", "
+            << expected_expr_ << " = " << expected_;
+        fail("integer equality", oss.str(), file_, line_);
     }
 }
 
-void require_eq(
-    unsigned long long actual,
-    unsigned long long expected,
-    const char* actual_expr,
-    const char* expected_expr,
-    const char* file,
-    int line) {
-    if (actual != expected) {
+void requireEq(
+    unsigned long long actual_,
+    unsigned long long expected_,
+    const char* actual_expr_,
+    const char* expected_expr_,
+    const char* file_,
+    int line_) {
+    if (actual_ != expected_) {
         std::ostringstream oss;
-        oss << actual_expr << " = " << actual << ", "
-            << expected_expr << " = " << expected;
-        fail("unsigned integer equality", oss.str(), file, line);
+        oss << actual_expr_ << " = " << actual_ << ", "
+            << expected_expr_ << " = " << expected_;
+        fail("unsigned integer equality", oss.str(), file_, line_);
     }
 }
 
-RunSummary run_all_tests(const RunOptions& options) {
+RunSummary runAllTests(const RunOptions& options_) {
     std::vector<TestCase> tests = Registry::instance().tests();
     std::sort(tests.begin(), tests.end(), [](const TestCase& a, const TestCase& b) {
         if (a.suite == b.suite) {
@@ -123,7 +123,7 @@ RunSummary run_all_tests(const RunOptions& options) {
 
     for (const auto& tc : tests) {
         const std::string id = tc.suite + "." + tc.name;
-        if (!options.filter.empty() && id.find(options.filter) == std::string::npos) {
+        if (!options_.filter.empty() && id.find(options_.filter) == std::string::npos) {
             continue;
         }
 
@@ -145,21 +145,21 @@ RunSummary run_all_tests(const RunOptions& options) {
         } catch (const TestFailure& e) {
             ++summary.failed;
             std::cout << "  [FAIL] " << tc.name << "\n" << e.what() << "\n";
-            if (options.fail_fast) {
+            if (options_.fail_fast) {
                 break;
             }
         } catch (const std::exception& e) {
             ++summary.failed;
             std::cout << "  [FAIL] " << tc.name << "\n"
                       << "  unexpected exception: " << e.what() << "\n";
-            if (options.fail_fast) {
+            if (options_.fail_fast) {
                 break;
             }
         } catch (...) {
             ++summary.failed;
             std::cout << "  [FAIL] " << tc.name << "\n"
                       << "  unexpected non-standard exception\n";
-            if (options.fail_fast) {
+            if (options_.fail_fast) {
                 break;
             }
         }

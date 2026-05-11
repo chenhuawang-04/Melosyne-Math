@@ -20,16 +20,16 @@ Registry& Registry::instance() {
 }
 
 bool Registry::add(std::string suite, std::string name, void (*fn)(const RunOptions&)) {
-    cases_.push_back(BenchmarkCase{std::move(suite), std::move(name), fn});
+    bench_cases.push_back(BenchmarkCase{std::move(suite), std::move(name), fn});
     return true;
 }
 
 const std::vector<BenchmarkCase>& Registry::cases() const noexcept {
-    return cases_;
+    return bench_cases;
 }
 
-bool register_case(const char* suite, const char* name, void (*fn)(const RunOptions&)) {
-    return Registry::instance().add(suite, name, fn);
+bool registerCase(const char* suite_, const char* name_, void (*fn_)(const RunOptions& options_)) {
+    return Registry::instance().add(suite_, name_, fn_);
 }
 
 void consume(double value) {
@@ -40,32 +40,32 @@ void consume(double value) {
     g_sink += value;
 }
 
-double sink_value() {
+double sinkValue() {
     return g_sink;
 }
 
-int invalid_sink_inputs() {
+int invalidSinkInputs() {
     return g_invalid_sink_inputs;
 }
 
-SampleStats measure_backend(
+SampleStats measureBackend(
     const BackendTask& task,
-    std::size_t ops_per_call,
-    const BenchConfig& config) {
+    std::size_t ops_per_call_,
+    const BenchConfig& config_) {
     SampleStats stats{};
-    if (!task.enabled || !task.fn || ops_per_call == 0) {
+    if (!task.enabled || !task.fn || ops_per_call_ == 0) {
         return stats;
     }
 
     std::vector<double> samples;
-    samples.reserve(static_cast<std::size_t>(std::max(1, config.repeats)));
+    samples.reserve(static_cast<std::size_t>(std::max(1, config_.repeats)));
 
-    for (int repeat = 0; repeat < std::max(1, config.repeats); ++repeat) {
-        for (int w = 0; w < std::max(0, config.warmup_rounds); ++w) {
+    for (int repeat = 0; repeat < std::max(1, config_.repeats); ++repeat) {
+        for (int w = 0; w < std::max(0, config_.warmup_rounds); ++w) {
             task.fn();
         }
 
-        const int min_calls = std::max(1, config.measure_rounds);
+        const int min_calls = std::max(1, config_.measure_rounds);
         int measured_calls = 0;
         double elapsed_ns = 0.0;
 
@@ -81,14 +81,14 @@ SampleStats measure_backend(
 
         run_chunk(min_calls);
 
-        const double min_elapsed_ns = std::max(0.0, config.min_measure_ms) * 1e6;
+        const double min_elapsed_ns = std::max(0.0, config_.min_measure_ms) * 1e6;
         while (elapsed_ns < min_elapsed_ns) {
             // Exponentially increase workload to amortize timer noise on tiny kernels.
             run_chunk(std::max(1, measured_calls));
         }
 
         const double ns_per_op =
-            elapsed_ns / (static_cast<double>(measured_calls) * static_cast<double>(ops_per_call));
+            elapsed_ns / (static_cast<double>(measured_calls) * static_cast<double>(ops_per_call_));
         samples.push_back(ns_per_op);
     }
 
@@ -113,17 +113,17 @@ SampleStats measure_backend(
     return stats;
 }
 
-void run_comparison_case(
-    const std::string& title,
-    std::size_t ops_per_call,
-    const std::vector<BackendTask>& tasks,
-    const BenchConfig& config) {
-    std::cout << "\n[CASE] " << title << "\n";
-    std::cout << "  ops/call=" << ops_per_call
-              << ", repeats=" << config.repeats
-              << ", warmup=" << config.warmup_rounds
-              << ", measure_calls=" << config.measure_rounds
-              << ", min_ms=" << std::fixed << std::setprecision(1) << config.min_measure_ms << "\n";
+void runComparisonCase(
+    const std::string& title_,
+    std::size_t ops_per_call_,
+    const std::vector<BackendTask>& tasks_,
+    const BenchConfig& config_) {
+    std::cout << "\n[CASE] " << title_ << "\n";
+    std::cout << "  ops/call=" << ops_per_call_
+              << ", repeats=" << config_.repeats
+              << ", warmup=" << config_.warmup_rounds
+              << ", measure_calls=" << config_.measure_rounds
+              << ", min_ms=" << std::fixed << std::setprecision(1) << config_.min_measure_ms << "\n";
 
     struct Row {
         std::string backend;
@@ -132,12 +132,12 @@ void run_comparison_case(
     };
 
     std::vector<Row> rows;
-    rows.reserve(tasks.size());
+    rows.reserve(tasks_.size());
 
-    for (const auto& task : tasks) {
+    for (const auto& task : tasks_) {
         Row row{task.backend, {}, task.enabled};
         if (task.enabled) {
-            row.stats = measure_backend(task, ops_per_call, config);
+            row.stats = measureBackend(task, ops_per_call_, config_);
         }
         rows.push_back(std::move(row));
     }
@@ -193,7 +193,7 @@ void run_comparison_case(
     }
 }
 
-int run_all(const RunOptions& options) {
+int runAll(const RunOptions& options_) {
     std::vector<BenchmarkCase> cases = Registry::instance().cases();
     std::sort(cases.begin(), cases.end(), [](const BenchmarkCase& a, const BenchmarkCase& b) {
         if (a.suite == b.suite) return a.name < b.name;
@@ -205,7 +205,7 @@ int run_all(const RunOptions& options) {
 
     for (const auto& c : cases) {
         const std::string id = c.suite + "." + c.name;
-        if (!options.filter.empty() && id.find(options.filter) == std::string::npos) {
+        if (!options_.filter.empty() && id.find(options_.filter) == std::string::npos) {
             continue;
         }
 
@@ -216,15 +216,15 @@ int run_all(const RunOptions& options) {
             std::cout << "========================================\n";
         }
 
-        c.fn(options);
+        c.fn(options_);
         ++executed;
     }
 
     std::cout << "\n========================================\n";
     std::cout << "Benchmark summary\n";
     std::cout << "  Cases executed: " << executed << "\n";
-    std::cout << "  Sink value    : " << sink_value() << "\n";
-    std::cout << "  Invalid sink inputs: " << invalid_sink_inputs() << "\n";
+    std::cout << "  Sink value    : " << sinkValue() << "\n";
+    std::cout << "  Invalid sink inputs: " << invalidSinkInputs() << "\n";
     std::cout << "========================================\n";
 
     return 0;

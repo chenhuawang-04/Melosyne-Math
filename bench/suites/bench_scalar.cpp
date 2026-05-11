@@ -12,10 +12,10 @@
 
 namespace {
 
-std::vector<float> make_signal(int n, float start) {
-    std::vector<float> v(n);
-    for (int i = 0; i < n; ++i) {
-        v[i] = start + 0.00137f * static_cast<float>(i % 997) - 0.75f;
+std::vector<float> makeSignal(int n_, float start_) {
+    std::vector<float> v(n_);
+    for (int i = 0; i < n_; ++i) {
+        v[i] = start_ + 0.00137f * static_cast<float>(i % 997) - 0.75f;
     }
     return v;
 }
@@ -24,10 +24,10 @@ std::vector<float> make_signal(int n, float start) {
 
 FM_BENCH(ScalarMath, SingleValueKernel) {
     constexpr int N = 8192;
-    const std::vector<float> a = make_signal(N, -0.2f);
-    const std::vector<float> b = make_signal(N, 0.5f);
+    const std::vector<float> a = makeSignal(N, -0.2f);
+    const std::vector<float> b = makeSignal(N, 0.5f);
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "single-value mixed math kernel",
         static_cast<std::size_t>(N),
         {
@@ -63,15 +63,15 @@ FM_BENCH(ScalarMath, SingleValueKernel) {
 
 FM_BENCH(ScalarMath, BatchArrayKernel) {
     constexpr int N = 16384;
-    const std::vector<float> base1 = make_signal(N, -1.0f);
+    const std::vector<float> base1 = makeSignal(N, -1.0f);
     // Keep this strictly positive to avoid domain errors in sqrt().
-    const std::vector<float> base2 = make_signal(N, 1.0f);
-    const std::vector<float> angles = make_signal(N, -3.14f);
+    const std::vector<float> base2 = makeSignal(N, 1.0f);
+    const std::vector<float> angles = makeSignal(N, -3.14f);
 
     std::vector<float> x_fast(N), y_fast(N), sin_fast(N), cos_fast(N);
     std::vector<float> x_std(N), y_std(N), sin_std(N), cos_std(N);
 
-    fmbench::run_comparison_case(
+    fmbench::runComparisonCase(
         "batch array kernel (clamp/min/sqrt/exp/sincos)",
         static_cast<std::size_t>(N * 5),
         {

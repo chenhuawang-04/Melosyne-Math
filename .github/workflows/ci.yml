@@ -20,6 +20,7 @@ jobs:
         run: |
           choco install llvm ninja --no-progress -y
           clang++ --version
+          clang-tidy --version
           ninja --version
           cmake --version
 
@@ -38,3 +39,24 @@ jobs:
       - name: Test
         shell: pwsh
         run: ctest --test-dir build --output-on-failure
+
+      - name: clang-tidy (naming)
+        shell: pwsh
+        run: |
+          cmake -S . -B build_tidy -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DFAST_MATH_BUILD_MODULES=OFF
+          cmake --build build_tidy -j 4
+          $files = @()
+          # Enforce naming only on public headers and module interfaces.
+          $files += Get-ChildItem -Recurse -File include/fast_math modules/fast_math |
+            Where-Object {
+              $_.Extension -in @(".h", ".hpp", ".cppm") -and
+              ($_.FullName -notmatch "\\\\include\\\\fast_math\\\\detail\\\\")
+            }
+          foreach ($f in $files) {
+            clang-tidy -p build_tidy $f.FullName
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+
+      - name: check (no trailing '_' variables)
+        shell: pwsh
+        run: .\\tools\\check_no_trailing_underscore_vars.ps1 -Root .

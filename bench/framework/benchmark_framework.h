@@ -46,27 +46,27 @@ public:
     const std::vector<BenchmarkCase>& cases() const noexcept;
 
 private:
-    std::vector<BenchmarkCase> cases_;
+    std::vector<BenchmarkCase> bench_cases;
 };
 
-bool register_case(const char* suite, const char* name, void (*fn)(const RunOptions&));
+bool registerCase(const char* suite_, const char* name_, void (*fn_)(const RunOptions& options_));
 
-SampleStats measure_backend(
+SampleStats measureBackend(
     const BackendTask& task,
-    std::size_t ops_per_call,
-    const BenchConfig& config);
+    std::size_t ops_per_call_,
+    const BenchConfig& config_);
 
-void run_comparison_case(
-    const std::string& title,
-    std::size_t ops_per_call,
-    const std::vector<BackendTask>& tasks,
-    const BenchConfig& config);
+void runComparisonCase(
+    const std::string& title_,
+    std::size_t ops_per_call_,
+    const std::vector<BackendTask>& tasks_,
+    const BenchConfig& config_);
 
-int run_all(const RunOptions& options = {});
+int runAll(const RunOptions& options_ = {});
 
 void consume(double value);
-double sink_value();
-int invalid_sink_inputs();
+double sinkValue();
+int invalidSinkInputs();
 
 } // namespace fmbench
 
@@ -77,6 +77,6 @@ int invalid_sink_inputs();
     static void FMBENCH_CONCAT(fm_bench_fn_, __LINE__)(const ::fmbench::RunOptions&);         \
     namespace {                                                                                 \
     const bool FMBENCH_CONCAT(fm_bench_reg_, __LINE__) =                                       \
-        ::fmbench::register_case(#SUITE, #NAME, &FMBENCH_CONCAT(fm_bench_fn_, __LINE__));      \
+        ::fmbench::registerCase(#SUITE, #NAME, &FMBENCH_CONCAT(fm_bench_fn_, __LINE__));      \
     }                                                                                           \
     static void FMBENCH_CONCAT(fm_bench_fn_, __LINE__)(const ::fmbench::RunOptions& options)

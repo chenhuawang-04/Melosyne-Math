@@ -72,18 +72,18 @@ FM_TEST(Power, ScalarVsReference) {
         const float y = rng.uniform(-3.0f, 3.0f);
         const float t = rng.uniform(-4.0f, 4.0f);
 
-        FM_REQUIRE(fmtest::near_rel(MMath::exp(t), std::exp(t), 2e-2f, 3e-2f));
+        FM_REQUIRE(fmtest::nearRel(MMath::exp(t), std::exp(t), 2e-2f, 3e-2f));
         FM_REQUIRE_NEAR(MMath::exp2(t), std::exp2(t), 8e-3f);
-        FM_REQUIRE(fmtest::near_rel(MMath::pow10(t), std::pow(10.0f, t), 2e-2f, 2e-2f));
+        FM_REQUIRE(fmtest::nearRel(MMath::pow10(t), std::pow(10.0f, t), 2e-2f, 2e-2f));
 
-        FM_REQUIRE(fmtest::near_rel(MMath::log(x), std::log(x), 2e-2f, 3e-2f));
-        FM_REQUIRE(fmtest::near_rel(MMath::log2(x), std::log2(x), 2e-2f, 3e-2f));
-        FM_REQUIRE(fmtest::near_rel(MMath::log10(x), std::log10(x), 2e-2f, 3e-2f));
+        FM_REQUIRE(fmtest::nearRel(MMath::log(x), std::log(x), 2e-2f, 3e-2f));
+        FM_REQUIRE(fmtest::nearRel(MMath::log2(x), std::log2(x), 2e-2f, 3e-2f));
+        FM_REQUIRE(fmtest::nearRel(MMath::log10(x), std::log10(x), 2e-2f, 3e-2f));
 
-        FM_REQUIRE(fmtest::near_rel(MMath::pow(x, y), std::pow(x, y), 5e-2f, 2e-2f));
+        FM_REQUIRE(fmtest::nearRel(MMath::pow(x, y), std::pow(x, y), 5e-2f, 2e-2f));
 
-        const int n = rng.uniform_int(-8, 8);
-        FM_REQUIRE(fmtest::near_rel(MMath::powi(x, n), std::pow(x, static_cast<float>(n)), 2e-5f, 2e-3f));
+        const int n = rng.uniformInt(-8, 8);
+        FM_REQUIRE(fmtest::nearRel(MMath::powi(x, n), std::pow(x, static_cast<float>(n)), 2e-5f, 2e-3f));
     }
 
 #if !defined(__FAST_MATH__)
@@ -109,14 +109,14 @@ FM_TEST(Power, ArrayOpsConsistency) {
             ref[i] = std::exp(values[i]);
         }
         MMath::expArray(values.data(), n);
-        for (int i = 0; i < n; ++i) FM_REQUIRE(fmtest::near_rel(values[i], ref[i], 2e-2f, 3e-2f));
+        for (int i = 0; i < n; ++i) FM_REQUIRE(fmtest::nearRel(values[i], ref[i], 2e-2f, 3e-2f));
 
         for (int i = 0; i < n; ++i) {
             values[i] = rng.uniform(0.1f, 20.0f);
             ref[i] = std::log(values[i]);
         }
         MMath::logArray(values.data(), n);
-        for (int i = 0; i < n; ++i) FM_REQUIRE(fmtest::near_rel(values[i], ref[i], 2e-2f, 3e-2f));
+        for (int i = 0; i < n; ++i) FM_REQUIRE(fmtest::nearRel(values[i], ref[i], 2e-2f, 3e-2f));
 
         for (int i = 0; i < n; ++i) {
             base[i] = rng.uniform(0.2f, 10.0f);
@@ -124,7 +124,7 @@ FM_TEST(Power, ArrayOpsConsistency) {
             ref[i] = std::pow(base[i], expo[i]);
         }
         MMath::powArray(base.data(), expo.data(), out.data(), n);
-        for (int i = 0; i < n; ++i) FM_REQUIRE(fmtest::near_rel(out[i], ref[i], 5e-2f, 2e-2f));
+        for (int i = 0; i < n; ++i) FM_REQUIRE(fmtest::nearRel(out[i], ref[i], 5e-2f, 2e-2f));
     }
 }
 
