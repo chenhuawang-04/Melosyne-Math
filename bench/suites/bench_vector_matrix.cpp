@@ -50,9 +50,9 @@ std::vector<MMath::Vec4> make_vec4_data(int n, Rng& rng) {
 std::vector<MMath::Mat4> make_mat4_data(int n, Rng& rng) {
     std::vector<MMath::Mat4> out(n);
     for (auto& m : out) {
-        m = MMath::mat4Mul(
+        m = MMath::mat4Multiply(
             MMath::mat4Translation(rng.uniform(-5.0f, 5.0f), rng.uniform(-5.0f, 5.0f), rng.uniform(-5.0f, 5.0f)),
-            MMath::mat4Mul(
+            MMath::mat4Multiply(
                 MMath::mat4RotationX(rng.uniform(-3.14f, 3.14f)),
                 MMath::mat4Scale(rng.uniform(0.7f, 1.8f), rng.uniform(0.7f, 1.8f), rng.uniform(0.7f, 1.8f))));
     }
@@ -208,14 +208,14 @@ FM_BENCH(Matrix, Mat4MulMulVecTransposeInverse) {
             {"fast_math", true, [&]() {
                  double acc = 0.0;
                  for (int i = 0; i < N_MUL; ++i) {
-                     auto m = MMath::mat4Mul(a[i], b[i]);
-                     auto tv = MMath::mat4MulVec4(m, v[i]);
+                     auto m = MMath::mat4Multiply(a[i], b[i]);
+                     auto tv = MMath::mat4MultiplyVec4(m, v[i]);
                      auto t = MMath::mat4Transpose(m);
                      acc += tv.x + tv.y + tv.z + tv.w + t.m[0] + t.m[5] + t.m[10] + t.m[15];
                  }
                  for (int i = 0; i < N_INV; ++i) {
-                     auto inv = MMath::mat4Inverse(a[i]);
-                     acc += inv.m[0] + inv.m[5] + inv.m[10] + inv.m[15];
+                     auto inv = MMath::mat4InverseChecked(a[i]);
+                     acc += inv.value.m[0] + inv.value.m[5] + inv.value.m[10] + inv.value.m[15];
                  }
                  fmbench::consume(acc);
              }},

@@ -9,8 +9,8 @@
 
 namespace {
 
-using namespace Melosyne;
-using namespace Melosyne::BitOps;
+using namespace MMath;
+using namespace MMath::BitOps;
 
 template <typename BitsetT>
 void seed_pattern(BitsetT& bs, std::size_t bits, uint32_t seed) {
@@ -183,13 +183,23 @@ FM_BENCH(BitOps, DynamicThroughputScalarVsOptimized_4K) {
                  }
                  fmbench::consume(acc);
              }},
+            {"scalar_fused", true, [&]() {
+                 double acc = 0.0;
+                 DynamicBitSet x = a;
+                 for (int r = 0; r < ROUNDS; ++r) {
+                     acc += static_cast<double>(bitwiseAndCount(x, b));
+                     acc += static_cast<double>(rank(x, static_cast<std::size_t>((r * 17) % static_cast<int>(N))));
+                     flipRange(x, static_cast<std::size_t>((r * 13) % static_cast<int>(N)),
+                               static_cast<std::size_t>(((r * 13) % static_cast<int>(N)) + 7));
+                 }
+                 fmbench::consume(acc);
+             }},
 #if defined(__AVX2__) || defined(__SSE4_1__)
             {"optimized", true, [&]() {
                  double acc = 0.0;
                  DynamicBitSet x = a;
                  for (int r = 0; r < ROUNDS; ++r) {
-                     bitwiseAndOptimized(x, b);
-                     acc += static_cast<double>(popcountOptimized(x));
+                     acc += static_cast<double>(bitwiseAndCountOptimized(x, b));
                      acc += static_cast<double>(rankOptimized(x, static_cast<std::size_t>((r * 17) % static_cast<int>(N))));
                      flipRangeOptimized(x, static_cast<std::size_t>((r * 13) % static_cast<int>(N)),
                                         static_cast<std::size_t>(((r * 13) % static_cast<int>(N)) + 7));
@@ -225,13 +235,21 @@ FM_BENCH(BitOps, DynamicAndPopcountLarge_64K) {
                  }
                  fmbench::consume(acc);
              }},
+            {"scalar_fused", true, [&]() {
+                 double acc = 0.0;
+                 DynamicBitSet x = a;
+                 for (int r = 0; r < ROUNDS; ++r) {
+                     acc += static_cast<double>(bitwiseAndCount(x, b));
+                     flipAll(x);
+                 }
+                 fmbench::consume(acc);
+             }},
 #if defined(__AVX2__) || defined(__SSE4_1__)
             {"optimized", true, [&]() {
                  double acc = 0.0;
                  DynamicBitSet x = a;
                  for (int r = 0; r < ROUNDS; ++r) {
-                     bitwiseAndOptimized(x, b);
-                     acc += static_cast<double>(popcountOptimized(x));
+                     acc += static_cast<double>(bitwiseAndCountOptimized(x, b));
                      flipAll(x);
                  }
                  fmbench::consume(acc);
@@ -263,8 +281,7 @@ FM_BENCH(StdBitsetCmp, DynamicVsStdBitset_AndCount_4K) {
                  double acc = 0.0;
                  DynamicBitSet x = a_dyn;
                  for (int r = 0; r < ROUNDS; ++r) {
-                     bitwiseAndOptimized(x, b_dyn);
-                     acc += static_cast<double>(popcountOptimized(x));
+                     acc += static_cast<double>(bitwiseAndCountOptimized(x, b_dyn));
                      flipRange(x, static_cast<std::size_t>((r * 13) & (N - 1)),
                                static_cast<std::size_t>(((r * 13) & (N - 1)) + 9));
                  }
@@ -308,8 +325,7 @@ FM_BENCH(StdBitsetCmp, DynamicVsStdBitset_AndCount_64K) {
                  double acc = 0.0;
                  DynamicBitSet x = a_dyn;
                  for (int r = 0; r < ROUNDS; ++r) {
-                     bitwiseAndOptimized(x, b_dyn);
-                     acc += static_cast<double>(popcountOptimized(x));
+                     acc += static_cast<double>(bitwiseAndCountOptimized(x, b_dyn));
                      flipAll(x);
                  }
                  fmbench::consume(acc);

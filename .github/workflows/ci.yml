@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  windows-clang-ninja:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install LLVM and Ninja
+        shell: pwsh
+        run: |
+          choco install llvm ninja --no-progress -y
+          clang++ --version
+          ninja --version
+          cmake --version
+
+      - name: Configure
+        shell: pwsh
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_C_COMPILER=clang
+          -DCMAKE_CXX_COMPILER=clang++
+          -DFAST_MATH_BUILD_MODULES=OFF
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build build -j 4
+
+      - name: Test
+        shell: pwsh
+        run: ctest --test-dir build --output-on-failure

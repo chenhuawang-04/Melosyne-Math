@@ -78,6 +78,9 @@ FM_TEST(Vec3, GeometryInvariants) {
             const MMath::Vec3 n = MMath::vec3Normalize(a);
             FM_REQUIRE_NEAR(MMath::vec3Length(n), 1.0f, 2e-4f);
             FM_REQUIRE(MMath::vec3IsNormalized(n));
+
+            const MMath::Vec3 nf = MMath::vec3NormalizeFast(a);
+            FM_REQUIRE_NEAR(MMath::vec3Length(nf), 1.0f, 2e-3f);
         }
 
         MMath::Vec3 t{}, bit{};

@@ -59,6 +59,10 @@ FM_TEST(External, Vector3Consistency) {
 
         const float dot_fast = MMath::vec3Dot(a, b);
         const MMath::Vec3 cross_fast = MMath::vec3Cross(a, b);
+#if !FM_HAVE_GLM && !FM_HAVE_EIGEN && !FM_HAVE_DIRECTXMATH
+        static_cast<void>(dot_fast);
+        static_cast<void>(cross_fast);
+#endif
         if (MMath::vec3LengthSquared(a) > 1e-4f) {
             const MMath::Vec3 n_fast = MMath::vec3Normalize(a);
             FM_REQUIRE_NEAR(MMath::vec3Length(n_fast), 1.0f, 2e-4f);
@@ -114,8 +118,12 @@ FM_TEST(External, Matrix4ConsistencyGlmEigen) {
         MMath::Mat4 b = fmtest::random_mat4(rng, -2.0f, 2.0f);
         MMath::Vec4 v = fmtest::random_vec4(rng, -2.0f, 2.0f);
 
-        const MMath::Mat4 m_fast = MMath::mat4Mul(a, b);
-        const MMath::Vec4 v_fast = MMath::mat4MulVec4(a, v);
+        const MMath::Mat4 m_fast = MMath::mat4Multiply(a, b);
+        const MMath::Vec4 v_fast = MMath::mat4MultiplyVec4(a, v);
+#if !FM_HAVE_GLM && !FM_HAVE_EIGEN
+        static_cast<void>(m_fast);
+        static_cast<void>(v_fast);
+#endif
 
 #if FM_HAVE_GLM
         const glm::mat4 ga = to_glm(a);

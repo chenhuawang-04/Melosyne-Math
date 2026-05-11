@@ -392,8 +392,8 @@ FM_BENCH(Geometry, Aabb3OverlapTransform) {
 }
 
 FM_BENCH(BitOps, ThroughputScalarVsOptimized) {
-    using namespace Melosyne;
-    using namespace Melosyne::BitOps;
+    using namespace MMath;
+    using namespace MMath::BitOps;
 
     constexpr int N = 4096;
     constexpr int ROUNDS = 2048;
@@ -417,13 +417,22 @@ FM_BENCH(BitOps, ThroughputScalarVsOptimized) {
                  }
                  fmbench::consume(acc);
              }},
+            {"scalar_fused", true, [&]() {
+                 double acc = 0.0;
+                 BitSet<N> x = a;
+                 for (int r = 0; r < ROUNDS; ++r) {
+                     acc += static_cast<double>(bitwiseAndCount(x, b));
+                     acc += static_cast<double>(rank(x, (r * 17) % N));
+                     flipRange(x, (r * 13) % N, ((r * 13) % N) + 7);
+                 }
+                 fmbench::consume(acc);
+             }},
 #if defined(__AVX2__) || defined(__SSE4_1__)
             {"optimized", true, [&]() {
                  double acc = 0.0;
                  BitSet<N> x = a;
                  for (int r = 0; r < ROUNDS; ++r) {
-                     bitwiseAndOptimized(x, b);
-                     acc += static_cast<double>(popcountOptimized(x));
+                     acc += static_cast<double>(bitwiseAndCountOptimized(x, b));
                      acc += static_cast<double>(rankOptimized(x, (r * 17) % N));
                      flipRangeOptimized(x, (r * 13) % N, ((r * 13) % N) + 7);
                  }

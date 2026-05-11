@@ -29,10 +29,14 @@
     #define BITOPS_FORCEINLINE inline
 #endif
 
-#if defined(_MSC_VER)
-    #define MMATH_D3D_FORCE_INLINE __forceinline
+#if defined(__has_cpp_attribute)
+    #if __has_cpp_attribute(deprecated)
+        #define MMATH_DEPRECATED(message) [[deprecated(message)]]
+    #else
+        #define MMATH_DEPRECATED(message)
+    #endif
 #else
-    #define MMATH_D3D_FORCE_INLINE __attribute__((always_inline)) inline
+    #define MMATH_DEPRECATED(message)
 #endif
 
 // ============================================================================
@@ -61,22 +65,6 @@
 
 #if defined(__FMA__) && !defined(MMATH_SIMD_FMA)
     #define MMATH_SIMD_FMA 1
-#endif
-
-#if (defined(__SSE__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 1)) && !defined(MMATH_D3D_SSE2)
-    #define MMATH_D3D_SSE2 1
-#endif
-
-#if (defined(__SSE4_1__) || defined(__AVX__)) && !defined(MMATH_D3D_SSE4_1)
-    #define MMATH_D3D_SSE4_1 1
-#endif
-
-#if defined(__AVX__) && !defined(MMATH_D3D_AVX)
-    #define MMATH_D3D_AVX 1
-#endif
-
-#if defined(__FMA__) && !defined(MMATH_D3D_FMA)
-    #define MMATH_D3D_FMA 1
 #endif
 
 #if defined(__AVX2__) && defined(__FMA__) && !defined(MMATH_HAS_AVX2_FMA)

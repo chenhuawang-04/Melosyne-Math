@@ -68,7 +68,7 @@ export {
  * - Byte swap: Endianness conversion
  * - Parity: XOR of all bits
  * - PEXT/PDEP: BMI2 parallel bit extract/deposit
- * - Gray code: Binary ↔ Gray code
+ * - Gray code: Binary to Gray code
  * - Morton code: 2D spatial indexing
  * - Permutation: Gosper's hack
  * - Scatter/Gather: Indexed bit access
@@ -79,17 +79,17 @@ export {
  * automatic selection between scalar and SIMD based on data size.
  *
  * **Performance Characteristics:**
- * - Core ops (AND/OR/XOR): 2-4x faster with AVX2 for large bitsets
- * - popcount: 2.4x faster with Harley-Seal algorithm (medium bitsets)
- * - scan ops: Scalar optimal (1-cycle TZCNT/LZCNT, early-exit)
- * - range ops: 4x faster with AVX2 for bulk operations
- * - advanced ops: Mostly scalar optimal (SWAR, BMI2)
+ * - Core ops (AND/OR/XOR/COPY/EQUAL): AVX2 wins on large bitsets
+ * - popcount/count metrics: Harley-Seal is used once the bitset is large enough
+ * - scan ops: Scalar remains best for tiny prefixes; SIMD helps on large rank/select queries
+ * - range ops: AVX2 wins for bulk spans with multiple full 64-bit words
+ * - advanced ops: Mostly scalar optimal (SWAR, BMI2), with SIMD only for bulk reverse/rotate
  *
  * **Usage:**
  * @code
  * #include <fast_math/bit_ops.h>
  *
- * using namespace Melosyne;
+ * using namespace MMath;
  *
  * // Create bitsets
  * BitSet<256> bs1 = {};
@@ -174,7 +174,7 @@ namespace BitOps {
  * - bitwiseNotOptimized, bitwiseAndNotOptimized
  *
  * **Count Operations:**
- * - popcountOptimized, hammingDistanceOptimized
+ * - popcountOptimized, bitwiseAndCountOptimized, hammingDistanceOptimized
  * - allOptimized (any/none are always scalar)
  * - unionCountOptimized, intersectionCountOptimized
  * - jaccardSimilarityOptimized, diceCoefficientOptimized
@@ -204,6 +204,26 @@ namespace BitOps {
 } // namespace Melosyne
 
 // ============================================================================
+// Canonical MMath namespace bridge
+// ============================================================================
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winclude-angled-in-module-purview"
+#endif
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 5244)
+#endif
+#include "fast_math/detail/bit_ops_namespace_bridge.inl"
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
+// ============================================================================
 // Implementation Notes
 // ============================================================================
 
@@ -211,7 +231,7 @@ namespace BitOps {
  * **When to use Optimized versions:**
  *
  * Always prefer "Optimized" suffix for operations on:
- * - Large bitsets (> 512 bits / 8 words)
+ * - Bitsets large enough to cross the centralized SIMD thresholds
  * - Bulk operations (core ops, range ops, counting)
  * - Performance-critical code paths
  *
@@ -259,11 +279,15 @@ namespace BitOps {
  * @endcode
  *
  * Threshold sizes for SIMD dispatch:
- * - Core ops (AND/OR/XOR): > 8 words (512 bits)
- * - Popcount: 8-512 words (512B-32KB, Harley-Seal optimal)
- * - Select/Rank: > 8 words
- * - Range ops: >= 4 full words in range
- * - Advanced ops: > 16 words (reverse, byteSwap)
+ * - Centralized in `detail/bit_ops_dispatch_policy.inl`
+ * - Core ops (AND/OR/XOR/COPY/EQUAL): >= 128 words
+ * - Fused in-place AND+count: >= 2048 words
+ * - Popcount: >= 2048 words
+ * - Hamming / union / intersection / all: >= 8 words
+ * - Select: >= 128 words
+ * - Rank: >= 256 words and the query must reach at least 64 full words
+ * - Range ops: >= 4 full words in the touched span
+ * - Advanced ops: reverse/rotate >= 64 words, byteSwap >= 8 words
  *
  * **Thread Safety:**
  *

@@ -11,7 +11,6 @@ export import fast_math.vec4;
 export import fast_math.mat3;
 export import fast_math.mat3_simd;
 export import fast_math.mat4;
-export import fast_math.mat4_d3d;
 
 export import fast_math.aabb2;
 export import fast_math.aabb2_simd;

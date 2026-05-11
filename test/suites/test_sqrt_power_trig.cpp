@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <vector>
 
 FM_TEST(Sqrt, ScalarVsReference) {
@@ -125,6 +126,44 @@ FM_TEST(Power, ArrayOpsConsistency) {
         MMath::powArray(base.data(), expo.data(), out.data(), n);
         for (int i = 0; i < n; ++i) FM_REQUIRE(fmtest::near_rel(out[i], ref[i], 5e-2f, 2e-2f));
     }
+}
+
+FM_TEST(Power, ArrayEdgeCaseContracts) {
+    const float pos_inf = std::numeric_limits<float>::infinity();
+    const float nan = std::numeric_limits<float>::quiet_NaN();
+
+    const float base[] = {-2.0f, -2.0f, 0.0f, -2.0f, pos_inf, 4.0f};
+    const float expo[] = {4.0f, 3.0f, -1.0f, 0.5f, 2.0f, nan};
+    float out[6]{};
+
+    MMath::powArray(base, expo, out, 6);
+
+    FM_REQUIRE_NEAR(out[0], 16.0f, 1e-5f);
+    FM_REQUIRE_NEAR(out[1], -8.0f, 1e-5f);
+    FM_REQUIRE(std::isinf(out[2]));
+    FM_REQUIRE(std::isnan(out[3]));
+    FM_REQUIRE(std::isinf(out[4]));
+    FM_REQUIRE(std::isnan(out[5]));
+}
+
+FM_TEST(Power, EdgeCaseContracts) {
+    FM_REQUIRE_NEAR(MMath::pow(0.0f, 3.0f), 0.0f, 1e-6f);
+    FM_REQUIRE_NEAR(MMath::pow(-2.0f, 4.0f), 16.0f, 1e-5f);
+    FM_REQUIRE_NEAR(MMath::pow(-2.0f, 3.0f), -8.0f, 1e-5f);
+
+    const float zero_neg = MMath::pow(0.0f, -1.0f);
+    FM_REQUIRE(std::isinf(zero_neg));
+
+    const float neg_fractional = MMath::pow(-2.0f, 0.5f);
+    FM_REQUIRE(std::isnan(neg_fractional));
+
+    FM_REQUIRE_NEAR(MMath::powi(2.0f, std::numeric_limits<int32_t>::min()), 0.0f, 1e-6f);
+    FM_REQUIRE(std::isinf(MMath::powi(0.0f, -2)));
+    FM_REQUIRE_NEAR(MMath::powi(-2.0f, 5), -32.0f, 1e-5f);
+
+    FM_REQUIRE(std::isinf(MMath::log(0.0f)));
+    FM_REQUIRE(MMath::log(0.0f) < 0.0f);
+    FM_REQUIRE(std::isnan(MMath::log(-1.0f)));
 }
 
 FM_TEST(Trig, ScalarAndBatchConsistency) {

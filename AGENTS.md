@@ -4,7 +4,7 @@
 - `include/fast_math/`: header-only core library (scalar + SIMD paths). Keep feature headers grouped by domain (`vec*`, `mat*`, `aabb*`, `bit_ops*`, `power*`, `trig*`).
 - `test/`: unified correctness framework (`framework/` + `suites/`). Each suite focuses on one subsystem.
 - `bench/`: unified performance framework (`framework/`, `adapters/`, `suites/`) with optional GLM/Eigen/DirectXMath comparisons.
-- `docs/` and root `*_REPORT.md`: design notes and optimization reports.
+- `docs/`: design and implementation notes.
 - `build/`: generated artifacts only; do not commit.
 
 ## Build, Test, and Development Commands

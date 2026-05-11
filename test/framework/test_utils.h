@@ -122,8 +122,8 @@ inline void require_mat3_near(
     for (int i = 0; i < 9; ++i) {
         if (!near_abs(a[i], e[i], eps)) {
             std::ostringstream oss;
-            oss << actual_expr << " differs at index " << i << ": actual=" << a[i]
-                << ", expected=" << e[i] << ", eps=" << eps;
+            oss << actual_expr << " differs from " << expected_expr << " at index " << i
+                << ": actual=" << a[i] << ", expected=" << e[i] << ", eps=" << eps;
             fail("Mat3 near", oss.str(), file, line);
         }
     }
@@ -140,8 +140,9 @@ inline void require_mat4_near(
     for (int i = 0; i < 16; ++i) {
         if (!near_abs(actual.m[i], expected.m[i], eps)) {
             std::ostringstream oss;
-            oss << actual_expr << " differs at m[" << i << "]: actual=" << actual.m[i]
-                << ", expected=" << expected.m[i] << ", eps=" << eps;
+            oss << actual_expr << " differs from " << expected_expr << " at m[" << i
+                << "]: actual=" << actual.m[i] << ", expected=" << expected.m[i]
+                << ", eps=" << eps;
             fail("Mat4 near", oss.str(), file, line);
         }
     }
