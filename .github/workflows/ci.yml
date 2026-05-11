@@ -43,17 +43,14 @@ jobs:
       - name: clang-tidy (naming)
         shell: pwsh
         run: |
-          cmake -S . -B build_tidy -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DFAST_MATH_BUILD_MODULES=OFF
+          cmake -S . -B build_tidy -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DFAST_MATH_BUILD_TESTS=OFF -DFAST_MATH_BUILD_BENCHMARKS=OFF
           cmake --build build_tidy -j 4
-          $files = @()
-          # Enforce naming only on public headers and module interfaces.
-          $files += Get-ChildItem -Recurse -File include/fast_math modules/fast_math |
-            Where-Object {
-              $_.Extension -in @(".h", ".hpp", ".cppm") -and
-              ($_.FullName -notmatch "\\\\include\\\\fast_math\\\\detail\\\\")
-            }
-          foreach ($f in $files) {
-            clang-tidy -p build_tidy $f.FullName
+
+          # Run clang-tidy on translation units that exist in the compilation database.
+          # Header diagnostics are still emitted through HeaderFilterRegex in .clang-tidy.
+          $mods = Get-ChildItem -Path modules/fast_math -Filter *.cppm -File
+          foreach ($m in $mods) {
+            clang-tidy -p build_tidy $m.FullName
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
 

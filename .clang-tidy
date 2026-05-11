@@ -2,10 +2,9 @@ Checks: >
   -*,
   readability-identifier-naming
 
-# Only diagnose our public headers/modules by default; internal `detail/` headers
-# are intentionally implementation-focused and may not follow the public naming
-# contract.
-HeaderFilterRegex: '(include/fast_math/(?!detail/).*)|(modules/fast_math/.*)'
+# Diagnose all core library code (public + internal detail headers) as part of the
+# naming contract for this repository.
+HeaderFilterRegex: '(include/fast_math/.*)|(modules/fast_math/.*)'
 
 # Treat naming violations as errors so CI can enforce the style contract.
 WarningsAsErrors: >
