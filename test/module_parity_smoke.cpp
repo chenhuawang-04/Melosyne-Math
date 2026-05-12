@@ -9,6 +9,8 @@ import fast_math.vec3;
 import fast_math.vec4;
 import fast_math.mat3;
 import fast_math.mat4;
+import fast_math.quat;
+import fast_math.quat_simd;
 import fast_math.bitset_view;
 import fast_math.bitset_dynamic;
 import fast_math.bit_ops;
@@ -190,6 +192,25 @@ int moduleParitySmoke() {
     }
     if (MMath::BitOps::nextPermutation(0) != 0) {
         return 34;
+    }
+
+    // Quaternion smoke: identity * identity = identity, and rotating +X
+    // by a 90-degree yaw (about Z) yields +Y.
+    {
+        const MMath::Quat id = MMath::quatIdentity();
+        const MMath::Quat id2 = MMath::quatMultiply(id, id);
+        if (abs_diff(id2.x, 0.0f) >= 1e-6f) return 35;
+        if (abs_diff(id2.y, 0.0f) >= 1e-6f) return 36;
+        if (abs_diff(id2.z, 0.0f) >= 1e-6f) return 37;
+        if (abs_diff(id2.w, 1.0f) >= 1e-6f) return 38;
+
+        const MMath::Quat yaw_90 = MMath::quatFromAxisAngle(
+            MMath::Vec3{0.0f, 0.0f, 1.0f}, 1.5707963267948966f);
+        const MMath::Vec3 rotated = MMath::quatRotateVec3(
+            yaw_90, MMath::Vec3{1.0f, 0.0f, 0.0f});
+        if (abs_diff(rotated.x, 0.0f) >= 1e-5f) return 39;
+        if (abs_diff(rotated.y, 1.0f) >= 1e-5f) return 40;
+        if (abs_diff(rotated.z, 0.0f) >= 1e-5f) return 41;
     }
 
     return 0;

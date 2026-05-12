@@ -65,6 +65,15 @@ int main() {
     if (!BitOps::test(bits, 9)) return 21;
     if (BitOps::popcount(bits) != 1) return 22;
 
+    // Quaternion smoke from the aggregate module.
+    Quat qid = quatIdentity();
+    Quat qmul = quatMultiply(qid, qid);
+    if (abs_diff(qmul.w, 1.0f) >= 1e-6f) return 23;
+    Vec3 rot = quatRotateVec3(qid, Vec3{1.0f, 2.0f, 3.0f});
+    if (abs_diff(rot.x, 1.0f) >= 1e-6f) return 24;
+    if (abs_diff(rot.y, 2.0f) >= 1e-6f) return 25;
+    if (abs_diff(rot.z, 3.0f) >= 1e-6f) return 26;
+
     if (int parity = moduleParitySmoke(); parity != 0) return 100 + parity;
 
     return 0;
