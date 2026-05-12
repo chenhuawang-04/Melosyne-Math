@@ -17,6 +17,8 @@ matrix, AABB, bitset, and scalar math primitives.
 
 - **Vectors**: `Vec2`, `Vec3`, `Vec4`, plus normalize/dot/cross helpers
 - **Matrices**: `Mat3`, `Mat4`, canonical multiply/transform/projection APIs
+- **Quaternions**: `Quat` with Hamilton multiply, rotation, SLERP/NLERP,
+  axis-angle and Euler conversion, and a world-frame integrator
 - **AABBs**: 2D and 3D axis-aligned bounding box helpers
 - **BitOps**: static and dynamic bitsets, popcount/count/rank/range/scans
 - **Scalar math**: `sqrt`, `inverseSqrt`, `reciprocal`, `pow`, `trig`
@@ -106,6 +108,7 @@ When module support is unavailable, set:
 ```cpp
 #include <fast_math/vec3.h>
 #include <fast_math/mat4.h>
+#include <fast_math/quat.h>
 
 MMath::Vec3 a{1.0f, 2.0f, 3.0f};
 MMath::Vec3 b{4.0f, 5.0f, 6.0f};
@@ -114,6 +117,16 @@ auto sum = MMath::vec3Add(a, b);
 MMath::Mat4 m = MMath::mat4Identity();
 MMath::Vec4 v{1.0f, 2.0f, 3.0f, 1.0f};
 auto transformed = MMath::mat4MultiplyVec4(m, v);
+
+// Quaternion: build a 90-degree yaw, apply it to +X, get +Y.
+const MMath::Quat yaw = MMath::quatFromAxisAngle(
+    MMath::Vec3{0.0f, 0.0f, 1.0f}, 1.5707963f);
+MMath::Vec3 rotated = MMath::quatRotateVec3(yaw, MMath::Vec3{1.0f, 0.0f, 0.0f});
+
+// Physics tick: world-frame angular velocity integration with renormalize.
+MMath::Quat orientation = MMath::quatIdentity();
+MMath::Vec3 omega{0.0f, 0.0f, 1.0f};   // 1 rad/s about Z
+orientation = MMath::quatIntegrate(orientation, omega, 1.0f / 240.0f);
 ```
 
 ### C++20 module usage
@@ -132,6 +145,7 @@ You can also import smaller units when you want tighter dependencies:
 import fast_math.types;
 import fast_math.vec3;
 import fast_math.mat4;
+import fast_math.quat;
 import fast_math.bit_ops;
 ```
 
@@ -152,6 +166,26 @@ import fast_math.bit_ops;
   - `mat3InverseChecked`
   - `mat4TryInverse`
   - `mat4InverseChecked`
+
+### Quaternion conventions
+
+`Quat` is a 16-byte aligned POD with the fixed layout `{x, y, z, w}` where
+`w` is the real (scalar) part and identity is `{0, 0, 0, 1}`. All
+quaternion APIs follow these locked rules:
+
+- **Hamilton, right-handed, radians**
+- `quatMultiply(a, b)` applies `b` first and then `a`, so
+  `quatRotateVec3(quatMultiply(a, b), v) == quatRotateVec3(a, quatRotateVec3(b, v))`
+- `quatIntegrate(q, omega, dt)` integrates a world-frame angular velocity
+  (`q_dot = 0.5 * omega_quat * q`) and renormalizes the result
+- `quatNormalize` is **Deterministic-Profile compliant**: it routes through
+  `MMath::inverseSqrt` (rsqrt + one Newton step) and never `std::sqrt` or
+  raw `_mm_rsqrt_*`. Use `quatNormalizeFast` when you want the raw rsqrt
+  throughput path
+- Only `quatNlerp` and `quatSlerp` are exposed for interpolation; raw
+  `quatLerp` is intentionally omitted because it yields non-unit results
+- Vec4 overloads of `quatIntegrate` and `quatRotateVec4` exist for SoA /
+  Vec4-column callers so they do not have to repack data on the hot path
 
 ---
 
@@ -212,6 +246,9 @@ For focused runs, use the benchmark binary filters provided by the framework.
 - Shared implementation details live in `include/fast_math/detail/`
 - Public headers and module interfaces are kept in parity
 - `mat4_d3d` has been removed; `Mat4` now uses the canonical standard path
+- The legacy `mat4FromQuat(const Vec4&)` entry point is preserved for
+  back-compat; new code should prefer `quatToMat4(const Quat&)`, which
+  produces byte-identical output and accepts the explicit `Quat` type
 - `build/` and other generated artifacts are intentionally excluded from source
   control
 
